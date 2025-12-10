@@ -1,0 +1,2351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Classifier - Browser Edition</title>
+    
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    
+    <style>
+        /* Modern Browser App Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                        sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .header-logo {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            max-height: 120px;
+            max-width: 200px;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .app-header h1 {
+            color: #4a5568;
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+
+        .separator {
+            color: #cbd5e0;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .section h2 {
+            color: #2d3748;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #805ad5, #6b46c1);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ed8936, #dd6b20);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #4fd1c7, #38b2ac);
+            color: white;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* Form Controls */
+        .form-control {
+            padding: 10px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+            background: white;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        /* Categories */
+        .categories-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .categories-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .category-item input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .category-count {
+            background: #4299e1;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .remove-category {
+            background: #f56565;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Camera */
+        .camera-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 12px;
+            border: 2px dashed #cbd5e0;
+        }
+
+        .camera-container h3 {
+            margin-bottom: 15px;
+            color: #4a5568;
+        }
+
+        .video-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        #camera-video, #test-camera-video {
+            width: 400px;
+            height: 300px;
+            border-radius: 8px;
+            background: #2d3748;
+            object-fit: cover;
+            border: 3px solid #4299e1;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        /* Real-time predictions overlay */
+        .video-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .live-predictions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            min-width: 200px;
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .live-predictions h4 {
+            margin: 0 0 10px 0;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .live-prediction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+
+        .live-prediction-label {
+            font-weight: 500;
+            color: #e2e8f0;
+        }
+
+        .live-prediction-confidence {
+            color: #4fd1c7;
+            font-weight: bold;
+        }
+
+        .realtime-toggle {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #e6fffa;
+            border-radius: 6px;
+            border: 1px solid #4fd1c7;
+        }
+
+        .realtime-toggle label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            color: #2d3748;
+            font-weight: 500;
+        }
+
+        .realtime-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #4fd1c7;
+        }
+
+        /* Training Images */
+        .training-images {
+            margin: 20px 0;
+        }
+
+        .category-images {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .category-images h4 {
+            margin-bottom: 15px;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .image-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #e2e8f0;
+            transition: transform 0.2s ease;
+        }
+
+        .image-item:hover {
+            transform: scale(1.05);
+            border-color: #4299e1;
+        }
+
+        .image-item img {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .remove-image {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #f56565;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .image-item:hover .remove-image {
+            opacity: 1;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #48bb78, #38a169);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        #progress-text {
+            text-align: center;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        /* Training Logs */
+        .training-logs {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 2px solid #e2e8f0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .training-logs h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #2d3748;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+
+        .logs-content {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #4a5568;
+            font-family: 'Courier New', monospace;
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Test Results */
+        .test-results {
+            margin: 20px 0;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 25px;
+        }
+
+        .test-image-container {
+            text-align: center;
+        }
+
+        .test-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            border: 3px solid #e2e8f0;
+            object-fit: contain;
+        }
+
+        .predictions-container h4 {
+            margin-bottom: 15px;
+            color: #4a5568;
+        }
+
+        .predictions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .prediction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .prediction-label {
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        .prediction-confidence {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .confidence-bar {
+            width: 100px;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4299e1, #3182ce);
+            transition: width 0.3s ease;
+        }
+
+        .confidence-text {
+            font-size: 0.9rem;
+            color: #718096;
+            min-width: 40px;
+        }
+
+        /* Training Stats */
+        .training-stats {
+            text-align: center;
+            padding: 15px;
+            background: #edf2f7;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .training-stats p {
+            color: #4a5568;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        /* Export Info */
+        .export-info {
+            margin: 15px 0;
+            padding: 15px;
+            background: #ebf8ff;
+            border-left: 4px solid #4299e1;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .export-info p {
+            color: #2b6cb0;
+            margin: 0;
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-muted {
+            color: #718096;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 15px;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .test-results {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            #camera-video, #test-camera-video {
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <img src="fh-logo.png" alt="FH St. Pölten Campus" class="header-logo">
+            <h1>🤖 Image Classification Training Tool</h1>
+            <p class="subtitle">Browser Edition</p>
+            <div class="status-bar">
+                <span id="tf-status">Loading TensorFlow.js...</span>
+                <span class="separator">|</span>
+                <span id="platform-info">Platform: Browser</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Categories Section -->
+            <section class="section">
+                <h2>📂 Categories Management</h2>
+                <div class="categories-container">
+                    <div id="categories-list" class="categories-list"></div>
+                    <button id="add-category-btn" class="btn btn-success">
+                        ➕ Add Category
+                    </button>
+                </div>
+            </section>
+
+            <!-- Training Data Collection -->
+            <section class="section">
+                <h2>📸 Training Data Collection</h2>
+                
+                <div class="control-group">
+                    <label for="category-select">Select Category for New Images:</label>
+                    <select id="category-select" class="form-control"></select>
+                </div>
+
+                <div class="button-group">
+                    <button id="upload-btn" class="btn btn-secondary">
+                        📁 Upload Images
+                    </button>
+                    <button id="camera-btn" class="btn btn-primary">
+                        📷 Use Camera
+                    </button>
+                    <button id="save-training-btn" class="btn btn-info">
+                        💾 Save Training Data
+                    </button>
+                    <button id="load-training-btn" class="btn btn-info">
+                        📂 Load Training Data
+                    </button>
+                </div>
+
+                <!-- Camera Preview -->
+                <div id="camera-container" class="camera-container hidden">
+                    <h3>Camera Preview</h3>
+                    <div class="video-wrapper">
+                        <video id="camera-video" autoplay playsinline muted></video>
+                        <canvas id="capture-canvas" class="hidden"></canvas>
+                    </div>
+                    <div class="camera-controls">
+                        <button id="capture-btn" class="btn btn-success">📸 Capture Image</button>
+                        <button id="stop-camera-btn" class="btn btn-danger">⏹️ Stop Camera</button>
+                    </div>
+                </div>
+
+                <!-- Training Images Display -->
+                <div id="training-images" class="training-images">
+                    <!-- Dynamic content will be inserted here -->
+                </div>
+
+                <div class="training-stats">
+                    <p>Total training images: <span id="total-images">0</span></p>
+                </div>
+            </section>
+
+            <!-- Model Training -->
+            <section class="section">
+                <h2>🎯 Model Training</h2>
+                
+                <button id="train-btn" class="btn btn-warning" disabled>
+                    🚀 Train Model
+                </button>
+
+                <div id="training-progress" class="progress-container hidden">
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                    <p id="progress-text">Training progress: 0%</p>
+                </div>
+
+                <div id="training-logs" class="training-logs hidden">
+                    <h4>Training Logs:</h4>
+                    <div id="logs-content" class="logs-content"></div>
+                </div>
+            </section>
+
+            <!-- Model Testing -->
+            <section class="section">
+                <h2>🔍 Test Model</h2>
+                
+                <div class="button-group">
+                    <button id="test-upload-btn" class="btn btn-primary" disabled>
+                        📁 Upload Test Image
+                    </button>
+                    <button id="test-camera-btn" class="btn btn-secondary" disabled>
+                        📷 Use Camera for Testing
+                    </button>
+                </div>
+
+                <!-- Test Camera Preview -->
+                <div id="test-camera-container" class="camera-container hidden">
+                    <h3>Test Camera Preview</h3>
+                    
+                    <!-- Real-time toggle -->
+                    <div class="realtime-toggle">
+                        <label>
+                            <input type="checkbox" id="realtime-toggle">
+                            🔄 Real-time evaluation (continuous predictions)
+                        </label>
+                    </div>
+                    
+                    <div class="video-wrapper">
+                        <div class="video-container">
+                            <video id="test-camera-video" autoplay playsinline muted></video>
+                            <canvas id="test-capture-canvas" class="hidden"></canvas>
+                            <!-- Live predictions overlay -->
+                            <div id="live-predictions" class="live-predictions hidden">
+                                <h4>Live Predictions</h4>
+                                <div id="live-predictions-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="camera-controls">
+                        <button id="test-capture-btn" class="btn btn-success">📸 Capture & Test</button>
+                        <button id="stop-test-camera-btn" class="btn btn-danger">⏹️ Stop Camera</button>
+                    </div>
+                </div>
+
+                <!-- Test Results -->
+                <div id="test-results" class="test-results hidden">
+                    <div id="test-image-container" class="test-image-container">
+                        <h4>Test Image:</h4>
+                        <img id="test-image" class="test-image" alt="Test image">
+                    </div>
+                    
+                    <div id="predictions-container" class="predictions-container">
+                        <h4>Predictions:</h4>
+                        <div id="predictions-list" class="predictions-list"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Model Export -->
+            <section class="section">
+                <h2>💾 Export Model</h2>
+                
+                <div class="control-group">
+                    <label for="model-name">Model Name:</label>
+                    <input type="text" id="model-name" class="form-control" value="my_classifier" placeholder="Enter model name">
+                </div>
+
+                <button id="export-btn" class="btn btn-success" disabled>
+                    📦 Export Model
+                </button>
+
+                <div class="export-info">
+                    <p>Export your trained model with full configuration, weights, and training data.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Hidden file inputs -->
+    <input type="file" id="file-input" multiple accept="image/*" class="hidden">
+    <input type="file" id="test-file-input" accept="image/*" class="hidden">
+    <input type="file" id="load-training-input" accept=".json" class="hidden">
+
+    <script>
+        // Browser-compatible Image Classifier App
+        class ImageClassifierApp {
+            constructor() {
+                this.model = null;
+                this.baseModel = null;
+                this.isModelLoaded = false;
+                this.categories = ['Category 1', 'Category 2'];
+                this.trainingData = {};
+                this.isTraining = false;
+                this.selectedCategory = 0;
+                this.cameraStream = null;
+                this.testCameraStream = null;
+                this.realtimeEvaluation = false;
+                this.predictionInterval = null;
+                this.usingMobileNet = false;
+                this.captureInterval = null;
+                this.isCapturing = false;
+                
+                this.init();
+            }
+
+            async init() {
+                console.log('Initializing Image Classifier App...');
+                
+                // Initialize TensorFlow
+                await this.initTensorFlow();
+                
+                // Setup event listeners
+                this.setupEventListeners();
+                
+                // Initialize UI
+                this.updateCategoriesUI();
+                this.updateTrainingImagesUI();
+                this.updateTrainingStats();
+                
+                console.log('App initialized successfully');
+            }
+
+            async initTensorFlow() {
+                try {
+                    console.log('Initializing TensorFlow.js...');
+                    document.getElementById('tf-status').textContent = 'Loading TensorFlow.js...';
+                    
+                    await tf.ready();
+                    console.log('TensorFlow.js ready');
+                    
+                    // Set backend
+                    if (tf.getBackend() === null) {
+                        await tf.setBackend('webgl');
+                    }
+                    
+                    console.log('Backend:', tf.getBackend());
+                    document.getElementById('tf-status').textContent = `TensorFlow.js ready (${tf.getBackend()})`;
+                    
+                    // Create base model
+                    await this.createBaseModel();
+                    
+                } catch (error) {
+                    console.error('TensorFlow initialization error:', error);
+                    document.getElementById('tf-status').textContent = 'TensorFlow.js error';
+                    alert('Failed to initialize TensorFlow.js: ' + error.message);
+                }
+            }
+
+            async createBaseModel() {
+                try {
+                    console.log('Attempting to load pretrained MobileNet model...');
+                    document.getElementById('tf-status').textContent = 'Loading MobileNet...';
+                    
+                    // Clear any existing models
+                    tf.disposeVariables();
+                    
+                    // Try to load MobileNet using reliable sources
+                    let mobilenet;
+                    try {
+                        // First, try the official TensorFlow.js models repository (most reliable)
+                        console.log('Trying TensorFlow.js models repository...');
+                        mobilenet = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_1.0_224/model.json');
+                        console.log('TensorFlow.js MobileNet V1 loaded successfully');
+                    } catch (v1Error) {
+                        console.log('MobileNet V1 failed, trying alternative sources...');
+                        
+                        try {
+                            // Try alternative MobileNet source
+                            mobilenet = await tf.loadLayersModel('https://kaggle-models.s3.amazonaws.com/tfjs/mobilenet_v1_1.0_224/model.json');
+                            console.log('Alternative MobileNet loaded successfully');
+                        } catch (altError) {
+                            console.log('Alternative sources failed, trying jsdelivr CDN...');
+                            
+                            // Try jsdelivr CDN as another fallback
+                            mobilenet = await tf.loadLayersModel('https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@1.0.0/dist/model.json');
+                            console.log('CDN MobileNet loaded successfully');
+                        }
+                    }
+                    
+                    // Create feature extractor by removing the final classification layer
+                    let featureExtractor;
+                    try {
+                        // For TensorFlow Hub models, the output is already a feature vector
+                        if (mobilenet.outputs.length === 1 && mobilenet.outputs[0].shape[1] <= 2048) {
+                            featureExtractor = mobilenet;
+                        } else {
+                            // For regular MobileNet, find the layer before classification
+                            const layerNames = mobilenet.layers.map(layer => layer.name);
+                            console.log('Available layers:', layerNames);
+                            
+                            // Try different possible layer names for feature extraction
+                            let featureLayerName = null;
+                            const possibleNames = ['global_average_pooling2d_1', 'GlobalAveragePooling2D', 'average_pooling2d_1', 'conv_pw_13_relu', 'conv_pw_13', 'out_relu'];
+                            
+                            for (const name of possibleNames) {
+                                try {
+                                    const layer = mobilenet.getLayer(name);
+                                    if (layer) {
+                                        featureLayerName = name;
+                                        break;
+                                    }
+                                } catch (e) {
+                                    continue;
+                                }
+                            }
+                            
+                            if (!featureLayerName) {
+                                // If no specific layer found, use the second-to-last layer
+                                featureLayerName = mobilenet.layers[mobilenet.layers.length - 2].name;
+                            }
+                            
+                            console.log('Using feature layer:', featureLayerName);
+                            const featureLayer = mobilenet.getLayer(featureLayerName);
+                            
+                            featureExtractor = tf.model({
+                                inputs: mobilenet.input,
+                                outputs: featureLayer.output
+                            });
+                        }
+                    } catch (layerError) {
+                        console.error('Error creating feature extractor:', layerError);
+                        throw layerError;
+                    }
+                    
+                    // Freeze all layers in the feature extractor
+                    featureExtractor.layers.forEach(layer => {
+                        layer.trainable = false;
+                    });
+                    
+                    // Create a wrapper model with proper preprocessing
+                    const input = tf.input({ shape: [224, 224, 3] });
+                    let features = featureExtractor.apply(input);
+                    
+                    // Add global average pooling if the output is 4D
+                    if (features.shape.length === 4) {
+                        features = tf.layers.globalAveragePooling2d().apply(features);
+                    }
+                    
+                    // Ensure the output is flattened
+                    if (features.shape.length > 2) {
+                        features = tf.layers.flatten().apply(features);
+                    }
+                    
+                    // Create the final base model
+                    this.baseModel = tf.model({
+                        inputs: input,
+                        outputs: features,
+                        name: 'mobilenet_feature_extractor'
+                    });
+                    
+                    this.isModelLoaded = true;
+                    this.usingMobileNet = true;
+                    console.log('MobileNet feature extractor created successfully');
+                    console.log('Feature extractor parameters:', this.baseModel.countParams());
+                    console.log('Feature vector size:', this.baseModel.outputShape[1]);
+                    
+                    document.getElementById('tf-status').textContent = `MobileNet loaded (${tf.getBackend()})`;
+                    
+                    // Enable training button
+                    this.updateTrainButton();
+                    
+                } catch (error) {
+                    console.error('Error loading MobileNet:', error);
+                    console.log('Falling back to improved CNN...');
+                    
+                    // Fallback to improved simple CNN if MobileNet fails
+                    await this.createFallbackModel();
+                }
+            }
+
+            async createFallbackModel() {
+                try {
+                    console.log('Creating improved CNN fallback model...');
+                    
+                    const timestamp = Date.now();
+                    
+                    // Create improved CNN architecture
+                    const input = tf.input({ 
+                        shape: [224, 224, 3],
+                        name: `input_${timestamp}`
+                    });
+                    
+                    // Block 1
+                    let x = tf.layers.conv2d({
+                        filters: 32,
+                        kernelSize: 3,
+                        activation: 'relu',
+                        padding: 'same',
+                        trainable: false,
+                        name: `conv1_${timestamp}`
+                    }).apply(input);
+                    
+                    x = tf.layers.batchNormalization({ 
+                        trainable: false,
+                        name: `bn1_${timestamp}`
+                    }).apply(x);
+                    
+                    x = tf.layers.maxPooling2d({ 
+                        poolSize: 2,
+                        name: `pool1_${timestamp}`
+                    }).apply(x);
+                    
+                    // Block 2
+                    x = tf.layers.conv2d({
+                        filters: 64,
+                        kernelSize: 3,
+                        activation: 'relu',
+                        padding: 'same',
+                        trainable: false,
+                        name: `conv2_${timestamp}`
+                    }).apply(x);
+                    
+                    x = tf.layers.batchNormalization({ 
+                        trainable: false,
+                        name: `bn2_${timestamp}`
+                    }).apply(x);
+                    
+                    x = tf.layers.maxPooling2d({ 
+                        poolSize: 2,
+                        name: `pool2_${timestamp}`
+                    }).apply(x);
+                    
+                    // Block 3
+                    x = tf.layers.conv2d({
+                        filters: 128,
+                        kernelSize: 3,
+                        activation: 'relu',
+                        padding: 'same',
+                        trainable: false,
+                        name: `conv3_${timestamp}`
+                    }).apply(x);
+                    
+                    x = tf.layers.batchNormalization({ 
+                        trainable: false,
+                        name: `bn3_${timestamp}`
+                    }).apply(x);
+                    
+                    x = tf.layers.maxPooling2d({ 
+                        poolSize: 2,
+                        name: `pool3_${timestamp}`
+                    }).apply(x);
+                    
+                    // Block 4
+                    x = tf.layers.conv2d({
+                        filters: 256,
+                        kernelSize: 3,
+                        activation: 'relu',
+                        padding: 'same',
+                        trainable: false,
+                        name: `conv4_${timestamp}`
+                    }).apply(x);
+                    
+                    x = tf.layers.batchNormalization({ 
+                        trainable: false,
+                        name: `bn4_${timestamp}`
+                    }).apply(x);
+                    
+                    // Global average pooling
+                    x = tf.layers.globalAveragePooling2d({
+                        name: `gap_${timestamp}`
+                    }).apply(x);
+                    
+                    this.baseModel = tf.model({
+                        inputs: input,
+                        outputs: x,
+                        name: `improved_cnn_${timestamp}`
+                    });
+                    
+                    this.isModelLoaded = true;
+                    this.usingMobileNet = false;
+                    console.log('Improved CNN model created successfully');
+                    console.log('Base model parameters:', this.baseModel.countParams());
+                    
+                    document.getElementById('tf-status').textContent = `Improved CNN loaded (${tf.getBackend()})`;
+                    
+                    // Enable training button
+                    this.updateTrainButton();
+                    
+                } catch (error) {
+                    console.error('Error creating fallback model:', error);
+                    alert('Failed to create base model: ' + error.message);
+                }
+            }
+
+            setupEventListeners() {
+                // Category management
+                document.getElementById('add-category-btn').addEventListener('click', () => this.addCategory());
+                
+                // Training data collection
+                document.getElementById('camera-btn').addEventListener('click', () => this.startCamera());
+                document.getElementById('upload-btn').addEventListener('click', () => this.uploadImages());
+                document.getElementById('save-training-btn').addEventListener('click', () => this.saveTrainingData());
+                document.getElementById('load-training-btn').addEventListener('click', () => this.loadTrainingData());
+                
+                // Camera controls - rapid capture functionality
+                const captureBtn = document.getElementById('capture-btn');
+                captureBtn.addEventListener('mousedown', () => this.startRapidCapture());
+                captureBtn.addEventListener('mouseup', () => this.stopRapidCapture());
+                captureBtn.addEventListener('mouseleave', () => this.stopRapidCapture());
+                captureBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this.startRapidCapture(); });
+                captureBtn.addEventListener('touchend', (e) => { e.preventDefault(); this.stopRapidCapture(); });
+                document.getElementById('stop-camera-btn').addEventListener('click', () => this.stopCamera());
+                
+                // Model training
+                document.getElementById('train-btn').addEventListener('click', () => this.trainModel());
+                
+                // Model testing
+                document.getElementById('test-upload-btn').addEventListener('click', () => this.uploadTestImage());
+                document.getElementById('test-camera-btn').addEventListener('click', () => this.startTestCamera());
+                document.getElementById('test-capture-btn').addEventListener('click', () => this.captureTestImage());
+                document.getElementById('stop-test-camera-btn').addEventListener('click', () => this.stopTestCamera());
+                
+                // Model export
+                document.getElementById('export-btn').addEventListener('click', () => this.exportModel());
+                
+                // Category selection
+                document.getElementById('category-select').addEventListener('change', (e) => {
+                    this.selectedCategory = parseInt(e.target.value);
+                });
+
+                // File inputs
+                document.getElementById('file-input').addEventListener('change', (e) => this.handleFileUpload(e));
+                document.getElementById('test-file-input').addEventListener('change', (e) => this.handleTestFileUpload(e));
+                document.getElementById('load-training-input').addEventListener('change', (e) => this.handleLoadTrainingFile(e));
+                
+                // Real-time toggle
+                document.getElementById('realtime-toggle').addEventListener('change', (e) => this.toggleRealtimeEvaluation(e.target.checked));
+            }
+
+            addCategory() {
+                const newCategory = `Category ${this.categories.length + 1}`;
+                this.categories.push(newCategory);
+                this.trainingData[newCategory] = [];
+                this.updateCategoriesUI();
+                this.updateTrainingImagesUI();
+                this.updateTrainingStats();
+            }
+
+            removeCategory(index) {
+                if (this.categories.length <= 2) return;
+                
+                const categoryToRemove = this.categories[index];
+                this.categories.splice(index, 1);
+                delete this.trainingData[categoryToRemove];
+                
+                if (this.selectedCategory >= this.categories.length) {
+                    this.selectedCategory = 0;
+                }
+                
+                this.updateCategoriesUI();
+                this.updateTrainingImagesUI();
+                this.updateTrainingStats();
+                this.updateTrainButton();
+            }
+
+            updateCategoryName(index, newName) {
+                const oldName = this.categories[index];
+                this.categories[index] = newName;
+                
+                if (this.trainingData[oldName]) {
+                    this.trainingData[newName] = this.trainingData[oldName];
+                    delete this.trainingData[oldName];
+                }
+                
+                this.updateCategoriesUI();
+                this.updateTrainingImagesUI();
+            }
+
+            updateCategoriesUI() {
+                const categoriesList = document.getElementById('categories-list');
+                const categorySelect = document.getElementById('category-select');
+                
+                // Update categories list
+                categoriesList.innerHTML = '';
+                this.categories.forEach((category, index) => {
+                    const categoryItem = document.createElement('div');
+                    categoryItem.className = 'category-item';
+                    
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = category;
+                    input.addEventListener('change', (e) => this.updateCategoryName(index, e.target.value));
+                    
+                    const count = document.createElement('span');
+                    count.className = 'category-count';
+                    count.textContent = `${this.trainingData[category]?.length || 0} images`;
+                    
+                    categoryItem.appendChild(input);
+                    categoryItem.appendChild(count);
+                    
+                    if (this.categories.length > 2) {
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'remove-category';
+                        removeBtn.textContent = '×';
+                        removeBtn.addEventListener('click', () => this.removeCategory(index));
+                        categoryItem.appendChild(removeBtn);
+                    }
+                    
+                    categoriesList.appendChild(categoryItem);
+                });
+                
+                // Update category select
+                categorySelect.innerHTML = '';
+                this.categories.forEach((category, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = category;
+                    option.selected = index === this.selectedCategory;
+                    categorySelect.appendChild(option);
+                });
+            }
+
+            async startCamera() {
+                try {
+                    console.log('Starting camera...');
+                    this.cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            width: { ideal: 640 },
+                            height: { ideal: 480 }
+                        } 
+                    });
+                    
+                    const video = document.getElementById('camera-video');
+                    video.srcObject = this.cameraStream;
+                    
+                    document.getElementById('camera-container').classList.remove('hidden');
+                    document.getElementById('camera-btn').disabled = true;
+                    document.getElementById('camera-btn').textContent = '📷 Camera Active';
+                    
+                    console.log('Camera started successfully');
+                } catch (error) {
+                    console.error('Camera error:', error);
+                    alert('Could not access camera: ' + error.message + '\n\nMake sure you\'re using HTTPS and have granted camera permissions.');
+                }
+            }
+
+            stopCamera() {
+                // Stop rapid capture if active
+                this.stopRapidCapture();
+                
+                if (this.cameraStream) {
+                    this.cameraStream.getTracks().forEach(track => track.stop());
+                    this.cameraStream = null;
+                }
+                
+                document.getElementById('camera-container').classList.add('hidden');
+                document.getElementById('camera-btn').disabled = false;
+                document.getElementById('camera-btn').textContent = '📷 Use Camera';
+            }
+
+            captureImage() {
+                const video = document.getElementById('camera-video');
+                const canvas = document.getElementById('capture-canvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = 224;
+                canvas.height = 224;
+                ctx.drawImage(video, 0, 0, 224, 224);
+                
+                canvas.toBlob((blob) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.addImageToTraining(e.target.result);
+                    };
+                    reader.readAsDataURL(blob);
+                });
+            }
+
+            startRapidCapture() {
+                if (this.isCapturing || !this.cameraStream) return;
+                
+                this.isCapturing = true;
+                const captureBtn = document.getElementById('capture-btn');
+                
+                // Visual feedback - change button appearance
+                captureBtn.style.transform = 'scale(0.95)';
+                captureBtn.style.backgroundColor = '#38a169';
+                captureBtn.textContent = '📸 Capturing...';
+                
+                // Take first image immediately
+                this.captureImage();
+                
+                // Start rapid capture interval (500ms between captures)
+                this.captureInterval = setInterval(() => {
+                    if (this.isCapturing) {
+                        this.captureImage();
+                    }
+                }, 500);
+            }
+
+            stopRapidCapture() {
+                if (!this.isCapturing) return;
+                
+                this.isCapturing = false;
+                const captureBtn = document.getElementById('capture-btn');
+                
+                // Clear interval
+                if (this.captureInterval) {
+                    clearInterval(this.captureInterval);
+                    this.captureInterval = null;
+                }
+                
+                // Reset button appearance
+                captureBtn.style.transform = '';
+                captureBtn.style.backgroundColor = '';
+                captureBtn.textContent = '📸 Capture Image';
+            }
+
+            uploadImages() {
+                document.getElementById('file-input').click();
+            }
+
+            handleFileUpload(event) {
+                const files = Array.from(event.target.files);
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.addImageToTraining(e.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                });
+                // Reset file input
+                event.target.value = '';
+            }
+
+            addImageToTraining(imageDataUrl) {
+                const categoryName = this.categories[this.selectedCategory];
+                if (!this.trainingData[categoryName]) {
+                    this.trainingData[categoryName] = [];
+                }
+                this.trainingData[categoryName].push(imageDataUrl);
+                
+                this.updateCategoriesUI();
+                this.updateTrainingImagesUI();
+                this.updateTrainingStats();
+                this.updateTrainButton();
+            }
+
+            removeImage(category, index) {
+                this.trainingData[category].splice(index, 1);
+                this.updateCategoriesUI();
+                this.updateTrainingImagesUI();
+                this.updateTrainingStats();
+                this.updateTrainButton();
+            }
+
+            updateTrainingImagesUI() {
+                const container = document.getElementById('training-images');
+                container.innerHTML = '';
+                
+                this.categories.forEach(category => {
+                    const images = this.trainingData[category] || [];
+                    
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'category-images';
+                    
+                    const title = document.createElement('h4');
+                    title.textContent = `${category} (${images.length} images)`;
+                    categoryDiv.appendChild(title);
+                    
+                    const grid = document.createElement('div');
+                    grid.className = 'images-grid';
+                    
+                    images.forEach((imageDataUrl, index) => {
+                        const imageItem = document.createElement('div');
+                        imageItem.className = 'image-item';
+                        
+                        const img = document.createElement('img');
+                        img.src = imageDataUrl;
+                        img.alt = `${category} ${index + 1}`;
+                        
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'remove-image';
+                        removeBtn.textContent = '×';
+                        removeBtn.addEventListener('click', () => this.removeImage(category, index));
+                        
+                        imageItem.appendChild(img);
+                        imageItem.appendChild(removeBtn);
+                        grid.appendChild(imageItem);
+                    });
+                    
+                    categoryDiv.appendChild(grid);
+                    container.appendChild(categoryDiv);
+                });
+            }
+
+            updateTrainingStats() {
+                const totalImages = Object.values(this.trainingData).reduce((sum, images) => sum + images.length, 0);
+                document.getElementById('total-images').textContent = totalImages;
+            }
+
+            updateTrainButton() {
+                const totalImages = Object.values(this.trainingData).reduce((sum, images) => sum + images.length, 0);
+                const minRequired = this.categories.length * 2;
+                const trainBtn = document.getElementById('train-btn');
+                
+                trainBtn.disabled = !this.isModelLoaded || totalImages < minRequired || this.isTraining;
+                
+                if (totalImages < minRequired) {
+                    trainBtn.textContent = `🚀 Train Model (Need ${minRequired - totalImages} more images)`;
+                } else {
+                    trainBtn.textContent = this.isTraining ? '⏳ Training...' : '🚀 Train Model';
+                }
+            }
+
+            async trainModel() {
+                if (!this.baseModel || this.isTraining) return;
+                
+                const totalImages = Object.values(this.trainingData).reduce((sum, images) => sum + images.length, 0);
+                if (totalImages < this.categories.length * 2) {
+                    alert(`Please add at least 2 images per category. You have ${totalImages} images total.`);
+                    return;
+                }
+                
+                this.isTraining = true;
+                this.updateTrainButton();
+                
+                const progressContainer = document.getElementById('training-progress');
+                const logsContainer = document.getElementById('training-logs');
+                const progressFill = document.getElementById('progress-fill');
+                const progressText = document.getElementById('progress-text');
+                const logsContent = document.getElementById('logs-content');
+                
+                progressContainer.classList.remove('hidden');
+                logsContainer.classList.remove('hidden');
+                
+                try {
+                    this.log('Starting transfer learning training...');
+                    
+                    // Extract features with data augmentation
+                    this.log('Extracting features from base model...');
+                    const allFeatures = [];
+                    const allLabels = [];
+                    let processedImages = 0;
+                    
+                    for (let i = 0; i < this.categories.length; i++) {
+                        const category = this.categories[i];
+                        const images = this.trainingData[category] || [];
+                        
+                        for (const imageDataUrl of images) {
+                            // Original image
+                            const imageTensor = await this.preprocessImage(imageDataUrl, false);
+                            const features = this.baseModel.predict(imageTensor);
+                            
+                            allFeatures.push(features);
+                            allLabels.push(i);
+                            
+                            processedImages++;
+                            imageTensor.dispose();
+                            
+                            // Add augmented versions for better training (if we have few images)
+                            if (images.length < 10) {
+                                for (let augIdx = 0; augIdx < 2; augIdx++) {
+                                    const augmentedTensor = await this.preprocessImage(imageDataUrl, true);
+                                    const augmentedFeatures = this.baseModel.predict(augmentedTensor);
+                                    
+                                    allFeatures.push(augmentedFeatures);
+                                    allLabels.push(i);
+                                    
+                                    processedImages++;
+                                    augmentedTensor.dispose();
+                                }
+                            }
+                            
+                            const progress = (processedImages / (totalImages * (images.length < 10 ? 3 : 1))) * 30;
+                            progressFill.style.width = `${progress}%`;
+                            progressText.textContent = `Extracting features: ${progress.toFixed(1)}%`;
+                            
+                            // Allow UI to update
+                            await new Promise(resolve => setTimeout(resolve, 10));
+                        }
+                    }
+                    
+                    this.log('Creating classification head...');
+                    const featuresTensor = tf.concat(allFeatures, 0);
+                    const labelsTensor = tf.oneHot(tf.tensor1d(allLabels, 'int32'), this.categories.length);
+                    
+                    // Create improved classification head
+                    const input = tf.input({ shape: [featuresTensor.shape[1]] });
+                    
+                    // More sophisticated classification head
+                    let x = tf.layers.dense({
+                        units: 512,
+                        activation: 'relu',
+                        trainable: true,
+                        kernelRegularizer: tf.regularizers.l2({ l2: 0.001 }),
+                        name: 'classification_dense_1'
+                    }).apply(input);
+                    
+                    x = tf.layers.dropout({ 
+                        rate: 0.5,
+                        name: 'classification_dropout_1' 
+                    }).apply(x);
+                    
+                    x = tf.layers.dense({
+                        units: 256,
+                        activation: 'relu',
+                        trainable: true,
+                        kernelRegularizer: tf.regularizers.l2({ l2: 0.001 }),
+                        name: 'classification_dense_2'
+                    }).apply(x);
+                    
+                    x = tf.layers.dropout({ 
+                        rate: 0.3,
+                        name: 'classification_dropout_2' 
+                    }).apply(x);
+                    
+                    const output = tf.layers.dense({
+                        units: this.categories.length,
+                        activation: 'softmax',
+                        trainable: true,
+                        name: 'classification_output'
+                    }).apply(x);
+                    
+                    const classificationHead = tf.model({
+                        inputs: input,
+                        outputs: output
+                    });
+                    
+                    // Improved training configuration
+                    const learningRate = allFeatures.length > 100 ? 0.0001 : 0.001;
+                    classificationHead.compile({
+                        optimizer: tf.train.adam(learningRate),
+                        loss: 'categoricalCrossentropy',
+                        metrics: ['accuracy']
+                    });
+                    
+                    this.log(`Training classification head with ${allFeatures.length} samples...`);
+                    this.log(`Learning rate: ${learningRate}`);
+                    progressFill.style.width = '40%';
+                    progressText.textContent = 'Training: 40%';
+                    
+                    // Adaptive training parameters
+                    const numEpochs = Math.min(100, Math.max(20, Math.floor(200 / Math.sqrt(allFeatures.length))));
+                    const batchSize = Math.min(32, Math.max(8, Math.floor(allFeatures.length / 4)));
+                    
+                    this.log(`Training for ${numEpochs} epochs with batch size ${batchSize}`);
+                    
+                    await classificationHead.fit(featuresTensor, labelsTensor, {
+                        epochs: numEpochs,
+                        batchSize: batchSize,
+                        validationSplit: 0.15,
+                        shuffle: true,
+                        callbacks: {
+                            onEpochEnd: (epoch, logs) => {
+                                const progress = 40 + ((epoch + 1) / numEpochs) * 60;
+                                progressFill.style.width = `${progress}%`;
+                                progressText.textContent = `Training: ${progress.toFixed(1)}%`;
+                                
+                                const val_acc = logs.val_acc ? `, val_acc=${logs.val_acc.toFixed(4)}` : '';
+                                this.log(`Epoch ${epoch + 1}/${numEpochs}: loss=${logs.loss.toFixed(4)}, acc=${logs.acc.toFixed(4)}${val_acc}`);
+                            }
+                        }
+                    });
+                    
+                    // Create complete model
+                    this.log('Creating complete model...');
+                    const completeInput = tf.input({ shape: [224, 224, 3] });
+                    const baseFeatures = this.baseModel.apply(completeInput);
+                    const finalOutput = classificationHead.apply(baseFeatures);
+                    
+                    this.model = tf.model({
+                        inputs: completeInput,
+                        outputs: finalOutput
+                    });
+                    
+                    progressFill.style.width = '100%';
+                    progressText.textContent = 'Training complete: 100%';
+                    
+                    this.log('Training completed successfully!');
+                    
+                    // Enable test and export buttons
+                    document.getElementById('test-upload-btn').disabled = false;
+                    document.getElementById('test-camera-btn').disabled = false;
+                    document.getElementById('export-btn').disabled = false;
+                    
+                    // Clean up
+                    allFeatures.forEach(tensor => tensor.dispose());
+                    featuresTensor.dispose();
+                    labelsTensor.dispose();
+                    
+                } catch (error) {
+                    console.error('Training error:', error);
+                    this.log('Training failed: ' + error.message);
+                    alert('Training failed: ' + error.message);
+                } finally {
+                    this.isTraining = false;
+                    this.updateTrainButton();
+                }
+            }
+
+            async preprocessImage(imageDataUrl, augment = false) {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = 224;
+                        canvas.height = 224;
+                        
+                        // Clear canvas
+                        ctx.fillStyle = '#000000';
+                        ctx.fillRect(0, 0, 224, 224);
+                        
+                        // Calculate scaling to maintain aspect ratio
+                        const scale = Math.min(224 / img.width, 224 / img.height);
+                        const scaledWidth = img.width * scale;
+                        const scaledHeight = img.height * scale;
+                        
+                        // Center the image
+                        const x = (224 - scaledWidth) / 2;
+                        const y = (224 - scaledHeight) / 2;
+                        
+                        // Apply augmentation if requested
+                        if (augment) {
+                            ctx.save();
+                            
+                            // Random horizontal flip
+                            if (Math.random() > 0.5) {
+                                ctx.translate(224, 0);
+                                ctx.scale(-1, 1);
+                            }
+                            
+                            // Random rotation (-10 to 10 degrees)
+                            const rotation = (Math.random() - 0.5) * 0.35; // ~20 degrees
+                            ctx.translate(112, 112);
+                            ctx.rotate(rotation);
+                            ctx.translate(-112, -112);
+                            
+                            // Random brightness adjustment
+                            const brightness = 0.8 + Math.random() * 0.4; // 0.8 to 1.2
+                            ctx.filter = `brightness(${brightness})`;
+                        }
+                        
+                        // Draw image with proper scaling
+                        ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+                        
+                        if (augment) {
+                            ctx.restore();
+                        }
+                        
+                        const imageData = ctx.getImageData(0, 0, 224, 224);
+                        
+                        // Apply appropriate normalization based on model type
+                        let tensor;
+                        if (this.usingMobileNet) {
+                            // ImageNet preprocessing for MobileNet
+                            tensor = tf.browser.fromPixels(imageData)
+                                .toFloat()
+                                .div(255.0)
+                                .sub([0.485, 0.456, 0.406])  // ImageNet mean
+                                .div([0.229, 0.224, 0.225])  // ImageNet std
+                                .expandDims(0);
+                        } else {
+                            // Simple normalization for custom CNN
+                            tensor = tf.browser.fromPixels(imageData)
+                                .toFloat()
+                                .div(255.0)
+                                .expandDims(0);
+                        }
+                        
+                        resolve(tensor);
+                    };
+                    img.src = imageDataUrl;
+                });
+            }
+
+            async startTestCamera() {
+                try {
+                    this.testCameraStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            width: { ideal: 640 },
+                            height: { ideal: 480 }
+                        } 
+                    });
+                    
+                    const video = document.getElementById('test-camera-video');
+                    video.srcObject = this.testCameraStream;
+                    
+                    document.getElementById('test-camera-container').classList.remove('hidden');
+                    document.getElementById('test-camera-btn').disabled = true;
+                    document.getElementById('test-camera-btn').textContent = '📷 Test Camera Active';
+                    
+                } catch (error) {
+                    console.error('Test camera error:', error);
+                    alert('Could not access camera: ' + error.message);
+                }
+            }
+
+            stopTestCamera() {
+                // Stop real-time evaluation
+                this.stopRealtimeEvaluation();
+                
+                if (this.testCameraStream) {
+                    this.testCameraStream.getTracks().forEach(track => track.stop());
+                    this.testCameraStream = null;
+                }
+                
+                document.getElementById('test-camera-container').classList.add('hidden');
+                document.getElementById('test-camera-btn').disabled = false;
+                document.getElementById('test-camera-btn').textContent = '📷 Use Camera for Testing';
+                
+                // Reset toggle
+                document.getElementById('realtime-toggle').checked = false;
+            }
+
+            captureTestImage() {
+                const video = document.getElementById('test-camera-video');
+                const canvas = document.getElementById('test-capture-canvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = 224;
+                canvas.height = 224;
+                ctx.drawImage(video, 0, 0, 224, 224);
+                
+                canvas.toBlob((blob) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.testImage(e.target.result);
+                    };
+                    reader.readAsDataURL(blob);
+                });
+            }
+
+            toggleRealtimeEvaluation(enabled) {
+                this.realtimeEvaluation = enabled;
+                
+                if (enabled && this.model && this.testCameraStream) {
+                    this.startRealtimeEvaluation();
+                } else {
+                    this.stopRealtimeEvaluation();
+                }
+            }
+
+            startRealtimeEvaluation() {
+                if (!this.model || !this.testCameraStream) {
+                    document.getElementById('realtime-toggle').checked = false;
+                    alert('Please train the model first and ensure camera is active.');
+                    return;
+                }
+
+                // Show live predictions overlay
+                document.getElementById('live-predictions').classList.remove('hidden');
+                
+                // Start prediction loop
+                this.predictionInterval = setInterval(() => {
+                    this.evaluateVideoFrame();
+                }, 500); // Predict every 500ms for good performance
+                
+                console.log('Real-time evaluation started');
+            }
+
+            stopRealtimeEvaluation() {
+                if (this.predictionInterval) {
+                    clearInterval(this.predictionInterval);
+                    this.predictionInterval = null;
+                }
+                
+                // Hide live predictions overlay
+                document.getElementById('live-predictions').classList.add('hidden');
+                
+                this.realtimeEvaluation = false;
+                console.log('Real-time evaluation stopped');
+            }
+
+            async evaluateVideoFrame() {
+                if (!this.model || !this.testCameraStream || !this.realtimeEvaluation) {
+                    return;
+                }
+
+                try {
+                    const video = document.getElementById('test-camera-video');
+                    const canvas = document.getElementById('test-capture-canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Check if video is ready
+                    if (video.readyState < 2) {
+                        return;
+                    }
+                    
+                    canvas.width = 224;
+                    canvas.height = 224;
+                    ctx.drawImage(video, 0, 0, 224, 224);
+                    
+                    // Get image data and create tensor
+                    const imageData = ctx.getImageData(0, 0, 224, 224);
+                    const tensor = tf.browser.fromPixels(imageData)
+                        .toFloat()
+                        .div(255.0)
+                        .expandDims(0);
+                    
+                    // Make prediction
+                    const prediction = this.model.predict(tensor);
+                    const probabilities = await prediction.data();
+                    
+                    // Create results
+                    const results = this.categories.map((category, index) => ({
+                        category,
+                        probability: probabilities[index]
+                    })).sort((a, b) => b.probability - a.probability);
+                    
+                    // Update live predictions display
+                    this.updateLivePredictions(results);
+                    
+                    // Clean up tensors
+                    tensor.dispose();
+                    prediction.dispose();
+                    
+                } catch (error) {
+                    console.error('Real-time evaluation error:', error);
+                    // Don't stop on errors, just log them
+                }
+            }
+
+            updateLivePredictions(results) {
+                const container = document.getElementById('live-predictions-list');
+                container.innerHTML = '';
+                
+                // Show top 3 predictions
+                results.slice(0, 3).forEach(result => {
+                    const item = document.createElement('div');
+                    item.className = 'live-prediction-item';
+                    
+                    const label = document.createElement('span');
+                    label.className = 'live-prediction-label';
+                    label.textContent = result.category;
+                    
+                    const confidence = document.createElement('span');
+                    confidence.className = 'live-prediction-confidence';
+                    confidence.textContent = `${(result.probability * 100).toFixed(1)}%`;
+                    
+                    item.appendChild(label);
+                    item.appendChild(confidence);
+                    container.appendChild(item);
+                });
+            }
+
+            uploadTestImage() {
+                document.getElementById('test-file-input').click();
+            }
+
+            handleTestFileUpload(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.testImage(e.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+                // Reset file input
+                event.target.value = '';
+            }
+
+            async testImage(imageDataUrl) {
+                if (!this.model) {
+                    alert('Please train the model first.');
+                    return;
+                }
+                
+                try {
+                    // Show test image
+                    const testImage = document.getElementById('test-image');
+                    testImage.src = imageDataUrl;
+                    document.getElementById('test-results').classList.remove('hidden');
+                    
+                    // Make prediction
+                    const imageTensor = await this.preprocessImage(imageDataUrl);
+                    const prediction = this.model.predict(imageTensor);
+                    const probabilities = await prediction.data();
+                    
+                    // Display results
+                    const results = this.categories.map((category, index) => ({
+                        category,
+                        probability: probabilities[index]
+                    })).sort((a, b) => b.probability - a.probability);
+                    
+                    this.displayPredictions(results);
+                    
+                    imageTensor.dispose();
+                    prediction.dispose();
+                    
+                } catch (error) {
+                    console.error('Prediction error:', error);
+                    alert('Prediction failed: ' + error.message);
+                }
+            }
+
+            displayPredictions(results) {
+                const container = document.getElementById('predictions-list');
+                container.innerHTML = '';
+                
+                results.forEach(result => {
+                    const item = document.createElement('div');
+                    item.className = 'prediction-item';
+                    
+                    const label = document.createElement('span');
+                    label.className = 'prediction-label';
+                    label.textContent = result.category;
+                    
+                    const confidence = document.createElement('div');
+                    confidence.className = 'prediction-confidence';
+                    
+                    const bar = document.createElement('div');
+                    bar.className = 'confidence-bar';
+                    
+                    const fill = document.createElement('div');
+                    fill.className = 'confidence-fill';
+                    fill.style.width = `${result.probability * 100}%`;
+                    
+                    const text = document.createElement('span');
+                    text.className = 'confidence-text';
+                    text.textContent = `${(result.probability * 100).toFixed(1)}%`;
+                    
+                    bar.appendChild(fill);
+                    confidence.appendChild(bar);
+                    confidence.appendChild(text);
+                    
+                    item.appendChild(label);
+                    item.appendChild(confidence);
+                    container.appendChild(item);
+                });
+            }
+
+            saveTrainingData() {
+                try {
+                    const dataStr = JSON.stringify(this.trainingData, null, 2);
+                    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                    const url = URL.createObjectURL(dataBlob);
+                    
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'training-data.json';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    
+                    alert('Training data saved successfully!');
+                } catch (error) {
+                    console.error('Save error:', error);
+                    alert('Failed to save training data: ' + error.message);
+                }
+            }
+
+            loadTrainingData() {
+                document.getElementById('load-training-input').click();
+            }
+
+            handleLoadTrainingFile(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            this.trainingData = data;
+                            this.categories = Object.keys(this.trainingData);
+                            if (this.categories.length === 0) {
+                                this.categories = ['Category 1', 'Category 2'];
+                            }
+                            this.selectedCategory = 0;
+                            
+                            this.updateCategoriesUI();
+                            this.updateTrainingImagesUI();
+                            this.updateTrainingStats();
+                            this.updateTrainButton();
+                            
+                            alert('Training data loaded successfully!');
+                        } catch (error) {
+                            alert('Failed to load training data: Invalid JSON file');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+                // Reset file input
+                event.target.value = '';
+            }
+
+            async exportModel() {
+                if (!this.model) {
+                    alert('Please train the model first.');
+                    return;
+                }
+                
+                try {
+                    const modelName = document.getElementById('model-name').value || 'my_classifier';
+                    
+                    // Create comprehensive model package
+                    const modelPackage = await this.createModelPackage(modelName);
+                    
+                    // Show export modal with multiple options
+                    this.showExportModal(modelPackage, modelName);
+                    
+                } catch (error) {
+                    console.error('Export error:', error);
+                    alert('Failed to export model: ' + error.message);
+                }
+            }
+
+            async createModelPackage(modelName) {
+                const startTime = Date.now();
+                
+                // Get model weights as arrays
+                const weights = this.model.getWeights();
+                const weightArrays = [];
+                
+                for (let i = 0; i < weights.length; i++) {
+                    const weightData = await weights[i].data();
+                    weightArrays.push({
+                        shape: weights[i].shape,
+                        data: Array.from(weightData),
+                        name: `weight_${i}`
+                    });
+                }
+                
+                // Create performance metrics
+                const performanceMetrics = {
+                    totalTrainingImages: Object.values(this.trainingData).reduce((sum, imgs) => sum + imgs.length, 0),
+                    imagesPerCategory: Object.fromEntries(
+                        this.categories.map(cat => [cat, this.trainingData[cat]?.length || 0])
+                    ),
+                    modelType: this.usingMobileNet ? 'MobileNet Transfer Learning' : 'Custom CNN',
+                    featureVectorSize: this.baseModel.outputShape[1],
+                    trainableParameters: this.model.countParams()
+                };
+                
+                // Create comprehensive model package
+                const modelPackage = {
+                    // Basic Info
+                    modelName: modelName,
+                    version: '1.0.0',
+                    createdAt: new Date().toISOString(),
+                    
+                    // Model Architecture
+                    architecture: {
+                        baseModel: this.usingMobileNet ? 'MobileNet' : 'Custom CNN',
+                        inputShape: [224, 224, 3],
+                        outputShape: [this.categories.length],
+                        categories: this.categories,
+                        numClasses: this.categories.length
+                    },
+                    
+                    // Model Topology
+                    modelTopology: this.model.toJSON(),
+                    
+                    // Training Data
+                    trainingData: {
+                        categories: this.categories,
+                        imageCount: performanceMetrics.totalTrainingImages,
+                        imagesPerCategory: performanceMetrics.imagesPerCategory,
+                        dataAugmentation: 'Enabled for categories with < 10 images'
+                    },
+                    
+                    // Performance Metrics
+                    performance: performanceMetrics,
+                    
+                    // Model Weights (serialized)
+                    weights: weightArrays,
+                    
+                    // Preprocessing Info
+                    preprocessing: {
+                        imageSize: [224, 224],
+                        normalization: this.usingMobileNet ? 'ImageNet (mean/std)' : 'Simple (0-1)',
+                        augmentation: {
+                            horizontalFlip: true,
+                            rotation: '±20 degrees',
+                            brightness: '0.8-1.2x'
+                        }
+                    },
+                    
+                    // Usage Instructions
+                    usage: {
+                        framework: 'TensorFlow.js',
+                        environment: 'Browser or Node.js',
+                        loadingInstructions: 'Use tf.loadLayersModel() for topology + manual weight loading',
+                        predictionExample: this.generatePredictionExample()
+                    },
+                    
+                    // Export metadata
+                    exportInfo: {
+                        exportedFrom: 'Browser Image Classifier',
+                        exportTime: new Date().toISOString(),
+                        exportDuration: Date.now() - startTime,
+                        fileFormat: 'JSON with embedded weights'
+                    }
+                };
+                
+                return modelPackage;
+            }
+
+            generatePredictionExample() {
+                return `
+// Example usage:
+async function loadAndPredict(modelPackage, imageElement) {
+    // 1. Recreate model from topology
+    const model = await tf.loadLayersModel(tf.io.fromMemory(modelPackage.modelTopology));
+    
+    // 2. Load weights
+    const weightTensors = modelPackage.weights.map(w => 
+        tf.tensor(w.data, w.shape)
+    );
+    model.setWeights(weightTensors);
+    
+    // 3. Preprocess image
+    const tensor = tf.browser.fromPixels(imageElement)
+        .resizeNearestNeighbor([224, 224])
+        .toFloat()
+        .div(255.0)
+        ${this.usingMobileNet ? '.sub([0.485, 0.456, 0.406]).div([0.229, 0.224, 0.225])' : ''}
+        .expandDims(0);
+    
+    // 4. Make prediction
+    const prediction = model.predict(tensor);
+    const probabilities = await prediction.data();
+    
+    // 5. Get results
+    const results = [${this.categories.map(cat => `'${cat}'`).join(', ')}]
+        .map((category, index) => ({
+            category,
+            probability: probabilities[index]
+        }))
+        .sort((a, b) => b.probability - a.probability);
+    
+    return results;
+}`;
+            }
+
+            showExportModal(modelPackage, modelName) {
+                // Create modal
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.8);
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+                
+                const content = document.createElement('div');
+                content.style.cssText = `
+                    background: white;
+                    padding: 30px;
+                    border-radius: 12px;
+                    max-width: 90%;
+                    max-height: 90%;
+                    overflow-y: auto;
+                    font-family: system-ui, sans-serif;
+                `;
+                
+                const packageSize = JSON.stringify(modelPackage).length;
+                const packageSizeMB = (packageSize / (1024 * 1024)).toFixed(2);
+                
+                content.innerHTML = `
+                    <h2 style="margin-top: 0; color: #2d3748;">🚀 Model Export - ${modelName}</h2>
+                    
+                    <div style="background: #f0fff4; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #48bb78;">
+                        <h3 style="margin: 0 0 10px 0; color: #2f855a;">✅ Complete Model Package Created</h3>
+                        <p style="margin: 5px 0; color: #2f855a;"><strong>Size:</strong> ${packageSizeMB} MB</p>
+                        <p style="margin: 5px 0; color: #2f855a;"><strong>Model Type:</strong> ${modelPackage.architecture.baseModel}</p>
+                        <p style="margin: 5px 0; color: #2f855a;"><strong>Categories:</strong> ${modelPackage.architecture.categories.join(', ')}</p>
+                        <p style="margin: 5px 0; color: #2f855a;"><strong>Training Images:</strong> ${modelPackage.performance.totalTrainingImages}</p>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <button id="export-full" style="padding: 15px; background: #48bb78; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                            📦 Export Full Model<br>
+                            <small style="opacity: 0.8;">Topology + Weights + Data</small>
+                        </button>
+                        
+                        <button id="export-config" style="padding: 15px; background: #4299e1; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                            ⚙️ Export Config Only<br>
+                            <small style="opacity: 0.8;">Architecture + Metadata</small>
+                        </button>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <button id="export-weights" style="padding: 15px; background: #805ad5; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                            ⚖️ Export Weights Only<br>
+                            <small style="opacity: 0.8;">Model parameters only</small>
+                        </button>
+                        
+                        <button id="export-training" style="padding: 15px; background: #ed8936; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                            🗂️ Export Training Data<br>
+                            <small style="opacity: 0.8;">Images + Categories</small>
+                        </button>
+                    </div>
+                    
+                    <div style="background: #e6fffa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 10px 0; color: #2c7a7b;">📋 Package Contents</h4>
+                        <ul style="margin: 0; padding-left: 20px; color: #2c7a7b;">
+                            <li>Complete model topology and architecture</li>
+                            <li>All trained weights and parameters</li>
+                            <li>Training data metadata and statistics</li>
+                            <li>Preprocessing and normalization settings</li>
+                            <li>Usage examples and loading instructions</li>
+                            <li>Performance metrics and export info</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="background: #fef5e7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 10px 0; color: #c05621;">⚡ Performance Info</h4>
+                        <p style="margin: 5px 0; color: #c05621;"><strong>Model Parameters:</strong> ${modelPackage.performance.trainableParameters.toLocaleString()}</p>
+                        <p style="margin: 5px 0; color: #c05621;"><strong>Feature Vector Size:</strong> ${modelPackage.performance.featureVectorSize}</p>
+                        <p style="margin: 5px 0; color: #c05621;"><strong>Preprocessing:</strong> ${modelPackage.preprocessing.normalization}</p>
+                    </div>
+                    
+                    <button id="close-modal" style="padding: 10px 20px; background: #e53e3e; color: white; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px;">
+                        ❌ Close
+                    </button>
+                `;
+                
+                modal.appendChild(content);
+                document.body.appendChild(modal);
+                
+                // Add event listeners
+                document.getElementById('export-full').onclick = () => {
+                    this.downloadFile(JSON.stringify(modelPackage, null, 2), `${modelName}_full_model.json`, 'application/json');
+                    alert('Full model exported successfully!');
+                };
+                
+                document.getElementById('export-config').onclick = () => {
+                    const configOnly = {
+                        modelName: modelPackage.modelName,
+                        architecture: modelPackage.architecture,
+                        modelTopology: modelPackage.modelTopology,
+                        trainingData: modelPackage.trainingData,
+                        preprocessing: modelPackage.preprocessing,
+                        usage: modelPackage.usage
+                    };
+                    this.downloadFile(JSON.stringify(configOnly, null, 2), `${modelName}_config.json`, 'application/json');
+                    alert('Model configuration exported successfully!');
+                };
+                
+                document.getElementById('export-weights').onclick = () => {
+                    const weightsOnly = {
+                        modelName: modelPackage.modelName,
+                        weights: modelPackage.weights,
+                        architecture: modelPackage.architecture,
+                        exportInfo: modelPackage.exportInfo
+                    };
+                    this.downloadFile(JSON.stringify(weightsOnly, null, 2), `${modelName}_weights.json`, 'application/json');
+                    alert('Model weights exported successfully!');
+                };
+                
+                document.getElementById('export-training').onclick = () => {
+                    const trainingPackage = {
+                        modelName: modelPackage.modelName,
+                        categories: this.categories,
+                        trainingData: this.trainingData,
+                        trainingStats: modelPackage.trainingData
+                    };
+                    this.downloadFile(JSON.stringify(trainingPackage, null, 2), `${modelName}_training_data.json`, 'application/json');
+                    alert('Training data exported successfully!');
+                };
+                
+                document.getElementById('close-modal').onclick = () => {
+                    document.body.removeChild(modal);
+                };
+                
+                // Close on outside click
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        document.body.removeChild(modal);
+                    }
+                };
+            }
+
+            downloadFile(content, filename, mimeType) {
+                const blob = new Blob([content], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
+
+            log(message) {
+                const logsContent = document.getElementById('logs-content');
+                const timestamp = new Date().toLocaleTimeString();
+                logsContent.innerHTML += `[${timestamp}] ${message}\n`;
+                logsContent.scrollTop = logsContent.scrollHeight;
+            }
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new ImageClassifierApp();
+        });
+    </script>
+</body>
+</html>
