@@ -376,7 +376,39 @@
             color: #4a5568;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 10px;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .delete-all-btn {
+            background: #f56565;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .delete-all-btn:hover {
+            background: #e53e3e;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(245, 101, 101, 0.3);
+        }
+
+        .delete-all-btn:active {
+            transform: translateY(0);
         }
 
         .images-grid {
@@ -495,7 +527,7 @@
         .test-results {
             margin: 20px 0;
             display: grid;
-            grid-template-columns: 1fr 2fr;
+            grid-template-columns: 1fr 1fr 2fr;
             gap: 25px;
         }
 
@@ -509,6 +541,70 @@
             border-radius: 8px;
             border: 3px solid #e2e8f0;
             object-fit: contain;
+        }
+
+        .saliency-map-container {
+            text-align: center;
+        }
+
+        .saliency-map {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            border: 3px solid #ed8936;
+            object-fit: contain;
+        }
+
+        .saliency-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #fef5e7;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #c05621;
+            border-left: 4px solid #ed8936;
+        }
+
+        .live-saliency-map {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            width: 120px;
+            height: 90px;
+            border: 2px solid #ed8936;
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .live-saliency-map canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .saliency-toggle {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #fef5e7;
+            border-radius: 6px;
+            border: 1px solid #ed8936;
+        }
+
+        .saliency-toggle label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: #c05621;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .saliency-toggle input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #ed8936;
         }
 
         .predictions-container h4 {
@@ -617,6 +713,11 @@
             
             .test-results {
                 grid-template-columns: 1fr;
+            }
+            
+            .live-saliency-map {
+                width: 80px;
+                height: 60px;
             }
             
             .button-group {
@@ -762,6 +863,14 @@
                     </button>
                 </div>
 
+                <!-- Saliency map toggle (applies to both upload and camera testing) -->
+                <div class="saliency-toggle">
+                    <label>
+                        <input type="checkbox" id="saliency-toggle">
+                        🔥 Show saliency maps (highlights important pixels)
+                    </label>
+                </div>
+
                 <!-- Test Camera Preview -->
                 <div id="test-camera-container" class="camera-container hidden">
                     <h3>Test Camera Preview</h3>
@@ -783,6 +892,11 @@
                                 <h4>Live Predictions</h4>
                                 <div id="live-predictions-list"></div>
                             </div>
+                            
+                            <!-- Live saliency map overlay -->
+                            <div id="live-saliency-map" class="live-saliency-map hidden">
+                                <canvas id="live-saliency-canvas"></canvas>
+                            </div>
                         </div>
                     </div>
                     
@@ -797,6 +911,14 @@
                     <div id="test-image-container" class="test-image-container">
                         <h4>Test Image:</h4>
                         <img id="test-image" class="test-image" alt="Test image">
+                    </div>
+                    
+                    <div id="saliency-map-container" class="saliency-map-container hidden">
+                        <h4>Saliency Map:</h4>
+                        <canvas id="saliency-map-canvas" class="saliency-map"></canvas>
+                        <div class="saliency-info">
+                            <strong>🔥 Saliency Map:</strong> Red/yellow areas show pixels most important for classification. Brighter colors indicate higher importance.
+                        </div>
                     </div>
                     
                     <div id="predictions-container" class="predictions-container">
@@ -849,6 +971,8 @@
                 this.usingMobileNet = false;
                 this.captureInterval = null;
                 this.isCapturing = false;
+                this.showSaliencyMaps = false;
+                this.realtimeSaliencyEnabled = false;
                 
                 this.init();
             }
@@ -1175,6 +1299,13 @@
                 
                 // Real-time toggle
                 document.getElementById('realtime-toggle').addEventListener('change', (e) => this.toggleRealtimeEvaluation(e.target.checked));
+                
+                // Saliency map toggle
+                const saliencyToggle = document.getElementById('saliency-toggle');
+                this.realtimeSaliencyEnabled = saliencyToggle.checked; // Initialize from checkbox state
+                saliencyToggle.addEventListener('change', (e) => {
+                    this.realtimeSaliencyEnabled = e.target.checked;
+                });
             }
 
             addCategory() {
@@ -1335,7 +1466,7 @@
                     if (this.isCapturing) {
                         this.captureImage();
                     }
-                }, 500);
+                }, 100);
             }
 
             stopRapidCapture() {
@@ -1394,6 +1525,28 @@
                 this.updateTrainButton();
             }
 
+            deleteAllImages(category) {
+                const imageCount = this.trainingData[category]?.length || 0;
+                if (imageCount === 0) {
+                    alert(`No images to delete in category "${category}".`);
+                    return;
+                }
+
+                const confirmed = confirm(
+                    `Are you sure you want to delete all ${imageCount} images from category "${category}"?\n\nThis action cannot be undone.`
+                );
+
+                if (confirmed) {
+                    this.trainingData[category] = [];
+                    this.updateCategoriesUI();
+                    this.updateTrainingImagesUI();
+                    this.updateTrainingStats();
+                    this.updateTrainButton();
+                    
+                    console.log(`Deleted all ${imageCount} images from category "${category}"`);
+                }
+            }
+
             updateTrainingImagesUI() {
                 const container = document.getElementById('training-images');
                 container.innerHTML = '';
@@ -1405,7 +1558,19 @@
                     categoryDiv.className = 'category-images';
                     
                     const title = document.createElement('h4');
-                    title.textContent = `${category} (${images.length} images)`;
+                    
+                    const headerDiv = document.createElement('div');
+                    headerDiv.className = 'category-header';
+                    headerDiv.textContent = `${category} (${images.length} images)`;
+                    
+                    const deleteAllBtn = document.createElement('button');
+                    deleteAllBtn.className = 'delete-all-btn';
+                    deleteAllBtn.innerHTML = '🗑️ Delete All';
+                    deleteAllBtn.title = `Delete all images from ${category}`;
+                    deleteAllBtn.addEventListener('click', () => this.deleteAllImages(category));
+                    
+                    title.appendChild(headerDiv);
+                    title.appendChild(deleteAllBtn);
                     categoryDiv.appendChild(title);
                     
                     const grid = document.createElement('div');
@@ -1715,6 +1880,140 @@
                 });
             }
 
+            async generateSaliencyMap(imageTensor, targetClass = null) {
+                if (!this.model) {
+                    console.error('Model not available for saliency map generation');
+                    return null;
+                }
+
+                try {
+                    // Convert input tensor to variable for gradient computation
+                    const inputVariable = tf.variable(imageTensor);
+                    
+                    // Define the function for gradient computation
+                    const f = () => {
+                        const prediction = this.model.apply(inputVariable);
+                        
+                        // If targetClass is specified, use it; otherwise use the top prediction
+                        let targetOutput;
+                        if (targetClass !== null) {
+                            // Extract the specific class score and squeeze to get scalar
+                            targetOutput = tf.squeeze(tf.slice(prediction, [0, targetClass], [1, 1]));
+                        } else {
+                            // Find the class with maximum probability and get its value
+                            const maxIndex = tf.argMax(prediction, 1);
+                            const oneHot = tf.oneHot(maxIndex, this.categories.length);
+                            targetOutput = tf.sum(tf.mul(prediction, oneHot));
+                            maxIndex.dispose();
+                            oneHot.dispose();
+                        }
+                        
+                        prediction.dispose();
+                        return targetOutput;
+                    };
+                    
+                    // Compute gradients using tf.variableGrads
+                    const grads = tf.variableGrads(f);
+                    const inputGradients = grads.grads[inputVariable.name];
+                    
+                    // Clean up
+                    grads.value.dispose();
+                    inputVariable.dispose();
+                    
+                    // Process gradients to create saliency map
+                    // Remove batch dimension first
+                    const gradients3D = tf.squeeze(inputGradients, [0]);
+                    
+                    // Take absolute values and sum across color channels
+                    const absoluteGrads = tf.abs(gradients3D);
+                    const saliencyMap = tf.sum(absoluteGrads, -1); // Sum across color channels
+                    
+                    // Normalize to 0-1 range
+                    const minVal = tf.min(saliencyMap);
+                    const maxVal = tf.max(saliencyMap);
+                    const range = tf.sub(maxVal, minVal);
+                    
+                    // Avoid division by zero
+                    const normalizedSaliency = tf.where(
+                        tf.greater(range, 1e-8),
+                        tf.div(tf.sub(saliencyMap, minVal), range),
+                        tf.zerosLike(saliencyMap)
+                    );
+                    
+                    // Clean up intermediate tensors
+                    inputGradients.dispose();
+                    gradients3D.dispose();
+                    absoluteGrads.dispose();
+                    saliencyMap.dispose();
+                    minVal.dispose();
+                    maxVal.dispose();
+                    range.dispose();
+                    
+                    return normalizedSaliency;
+                    
+                } catch (error) {
+                    console.error('Error generating saliency map:', error);
+                    return null;
+                }
+            }
+
+            async createSaliencyMapCanvas(saliencyTensor) {
+                if (!saliencyTensor) return null;
+                
+                try {
+                    // Get the saliency data
+                    const saliencyData = await saliencyTensor.data();
+                    const [height, width] = saliencyTensor.shape;
+                    
+                    // Create canvas
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Create image data
+                    const imageData = ctx.createImageData(width, height);
+                    const data = imageData.data;
+                    
+                    // Convert saliency values to heatmap colors (red-yellow scale)
+                    for (let i = 0; i < saliencyData.length; i++) {
+                        const value = saliencyData[i];
+                        const pixelIndex = i * 4;
+                        
+                        // Create heatmap: black -> red -> yellow -> white
+                        if (value < 0.25) {
+                            // Black to red
+                            const intensity = value * 4;
+                            data[pixelIndex] = Math.floor(255 * intensity);     // Red
+                            data[pixelIndex + 1] = 0;                          // Green
+                            data[pixelIndex + 2] = 0;                          // Blue
+                        } else if (value < 0.75) {
+                            // Red to yellow
+                            const intensity = (value - 0.25) * 2;
+                            data[pixelIndex] = 255;                            // Red
+                            data[pixelIndex + 1] = Math.floor(255 * intensity); // Green
+                            data[pixelIndex + 2] = 0;                          // Blue
+                        } else {
+                            // Yellow to white
+                            const intensity = (value - 0.75) * 4;
+                            data[pixelIndex] = 255;                            // Red
+                            data[pixelIndex + 1] = 255;                        // Green
+                            data[pixelIndex + 2] = Math.floor(255 * intensity); // Blue
+                        }
+                        data[pixelIndex + 3] = 255; // Alpha
+                    }
+                    
+                    // Put image data on canvas
+                    ctx.putImageData(imageData, 0, 0);
+                    
+                    return canvas;
+                    
+                } catch (error) {
+                    console.error('Error creating saliency map canvas:', error);
+                    return null;
+                }
+            }
+
             async startTestCamera() {
                 try {
                     this.testCameraStream = await navigator.mediaDevices.getUserMedia({ 
@@ -1832,12 +2131,22 @@
                     canvas.height = 224;
                     ctx.drawImage(video, 0, 0, 224, 224);
                     
-                    // Get image data and create tensor
+                    // Get image data and create tensor with proper preprocessing
                     const imageData = ctx.getImageData(0, 0, 224, 224);
-                    const tensor = tf.browser.fromPixels(imageData)
-                        .toFloat()
-                        .div(255.0)
-                        .expandDims(0);
+                    let tensor;
+                    if (this.usingMobileNet) {
+                        tensor = tf.browser.fromPixels(imageData)
+                            .toFloat()
+                            .div(255.0)
+                            .sub([0.485, 0.456, 0.406])
+                            .div([0.229, 0.224, 0.225])
+                            .expandDims(0);
+                    } else {
+                        tensor = tf.browser.fromPixels(imageData)
+                            .toFloat()
+                            .div(255.0)
+                            .expandDims(0);
+                    }
                     
                     // Make prediction
                     const prediction = this.model.predict(tensor);
@@ -1852,6 +2161,14 @@
                     // Update live predictions display
                     this.updateLivePredictions(results);
                     
+                    // Generate and display live saliency map if enabled
+                    if (this.realtimeSaliencyEnabled) {
+                        await this.updateLiveSaliencyMap(tensor, results[0]);
+                    } else {
+                        // Hide saliency map if disabled
+                        document.getElementById('live-saliency-map').classList.add('hidden');
+                    }
+                    
                     // Clean up tensors
                     tensor.dispose();
                     prediction.dispose();
@@ -1859,6 +2176,44 @@
                 } catch (error) {
                     console.error('Real-time evaluation error:', error);
                     // Don't stop on errors, just log them
+                }
+            }
+
+            async updateLiveSaliencyMap(imageTensor, topPrediction) {
+                if (!this.realtimeSaliencyEnabled || !this.model) {
+                    return;
+                }
+                
+                try {
+                    const liveMapContainer = document.getElementById('live-saliency-map');
+                    const liveMapCanvas = document.getElementById('live-saliency-canvas');
+                    
+                    // Find the index of the top prediction
+                    const topClassIndex = this.categories.indexOf(topPrediction.category);
+                    
+                    // Generate saliency map for the top prediction
+                    const saliencyTensor = await this.generateSaliencyMap(imageTensor, topClassIndex);
+                    
+                    if (saliencyTensor) {
+                        // Create saliency map canvas
+                        const saliencyMapCanvas = await this.createSaliencyMapCanvas(saliencyTensor);
+                        
+                        if (saliencyMapCanvas) {
+                            // Copy the saliency map to the live display canvas
+                            liveMapCanvas.width = 120;
+                            liveMapCanvas.height = 90;
+                            const ctx = liveMapCanvas.getContext('2d');
+                            ctx.drawImage(saliencyMapCanvas, 0, 0, 120, 90);
+                            
+                            // Show live saliency map
+                            liveMapContainer.classList.remove('hidden');
+                        }
+                        
+                        saliencyTensor.dispose();
+                    }
+                } catch (error) {
+                    console.error('Error generating live saliency map:', error);
+                    // Don't break the real-time loop on saliency errors
                 }
             }
 
@@ -1927,12 +2282,56 @@
                     
                     this.displayPredictions(results);
                     
+                    // Generate and display saliency map if enabled
+                    await this.displaySaliencyMapForTestImage(imageTensor, results[0]);
+                    
                     imageTensor.dispose();
                     prediction.dispose();
                     
                 } catch (error) {
                     console.error('Prediction error:', error);
                     alert('Prediction failed: ' + error.message);
+                }
+            }
+
+            async displaySaliencyMapForTestImage(imageTensor, topPrediction) {
+                const saliencyContainer = document.getElementById('saliency-map-container');
+                const saliencyCanvas = document.getElementById('saliency-map-canvas');
+                
+                if (this.realtimeSaliencyEnabled && this.model) {
+                    try {
+                        // Find the index of the top prediction
+                        const topClassIndex = this.categories.indexOf(topPrediction.category);
+                        
+                        // Generate saliency map for the top prediction
+                        const saliencyTensor = await this.generateSaliencyMap(imageTensor, topClassIndex);
+                        
+                        if (saliencyTensor) {
+                            // Create saliency map canvas
+                            const saliencyMapCanvas = await this.createSaliencyMapCanvas(saliencyTensor);
+                            
+                            if (saliencyMapCanvas) {
+                                // Copy the saliency map to the display canvas
+                                saliencyCanvas.width = 224;
+                                saliencyCanvas.height = 224;
+                                const ctx = saliencyCanvas.getContext('2d');
+                                ctx.drawImage(saliencyMapCanvas, 0, 0, 224, 224);
+                                
+                                // Show saliency map container
+                                saliencyContainer.classList.remove('hidden');
+                                
+                                console.log(`Saliency map generated for: ${topPrediction.category} (${(topPrediction.probability * 100).toFixed(1)}%)`);
+                            }
+                            
+                            saliencyTensor.dispose();
+                        }
+                    } catch (error) {
+                        console.error('Error generating saliency map for test image:', error);
+                        saliencyContainer.classList.add('hidden');
+                    }
+                } else {
+                    // Hide saliency map if toggle is off
+                    saliencyContainer.classList.add('hidden');
                 }
             }
 
