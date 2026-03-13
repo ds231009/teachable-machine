@@ -12,14 +12,16 @@ export const useFeatureExtractor = () => {
         if (classifierRef.current) return;
 
         const initML5 = async () => {
-            // 1. Load MobileNet
+            // 1. Load MobileNet (This is the heavy part that takes time)
             featureExtractorRef.current = window.ml5.featureExtractor('MobileNet', () => {
                 console.log('MobileNet features loaded!');
-                // 2. Initialize classifier without a default video element
-                classifierRef.current = featureExtractorRef.current.classification(() => {
-                    console.log('Classifier initialized!');
-                    setIsModelLoaded(true);
-                });
+
+                // 2. Initialize classifier (Synchronous in v0.12.2 when no video is passed)
+                classifierRef.current = featureExtractorRef.current.classification();
+
+                console.log('Classifier initialized!');
+                // 3. Manually trigger the state update
+                setIsModelLoaded(true);
             });
         };
 
@@ -27,29 +29,61 @@ export const useFeatureExtractor = () => {
     }, []);
 
     // Takes the React dataset, loads images into memory, feeds ml5, and trains
-    const prepareAndTrain = useCallback(async (dataset) => {
+    // Takes your React dataset array, loads images into memory, feeds ml5, and trains
+    const prepareAndTrain = useCallback(async (currentDataset) => {
         if (!classifierRef.current) return;
 
         setTrainingStatus('preparing');
 
-        // Iterate through the dataset object: { 'Class 1': [url1, url2], 'Class 2': [url3] }
-        for (const label of Object.keys(dataset)) {
-            for (const imageUrl of dataset[label]) {
-                // Create an HTML Image Element in memory
-                const img = new Image();
-                img.src = imageUrl;
+        let totalImages = 0;
 
-                // Wait for the image to fully load before passing to ml5
-                await new Promise((resolve) => {
-                    img.onload = resolve;
-                });
+        // 1. Loop through your array of class objects natively
+        for (const classObj of currentDataset) {
 
-                classifierRef.current.addImage(img, label);
+            // 2. Loop through the image URLs in each class
+            // 1. Loop through your array of class objects natively
+            for (const classObj of currentDataset) {
+
+                // Skip empty classes so TensorFlow doesn't crash trying to classify "nothing"
+                if (classObj.items.length === 0) continue;
+
+                // 2. Loop through the image URLs in each class
+                for (const imageUrl of classObj.items) {
+                    totalImages++;
+
+                    const img = new Image();
+                    img.src = imageUrl;
+
+                    // Step A: Wait for the image to physically load into browser memory
+                    await new Promise((resolve) => {
+                        img.onload = resolve;
+                        img.onerror = () => {
+                            console.error("Failed to load image:", imageUrl);
+                            resolve();
+                        };
+                    });
+
+                    // Step B: CRITICAL FIX - Wait for ml5 to extract the features
+                    await new Promise((resolve) => {
+                        classifierRef.current.addImage(img, classObj.className, () => {
+                            // This callback fires only when TensorFlow is done with the image
+                            resolve();
+                        });
+                    });
+                }
             }
+        }
+
+        // Safety Check: Prevent TensorFlow from crashing on empty data
+        if (totalImages === 0) {
+            alert("Whoops! Please upload at least one image before training.");
+            setTrainingStatus('idle');
+            return;
         }
 
         setTrainingStatus('training');
 
+        // Start the training loop
         classifierRef.current.train((loss) => {
             if (loss !== null) {
                 setCurrentLoss(loss);
@@ -64,10 +98,20 @@ export const useFeatureExtractor = () => {
 
         const img = new Image();
         img.src = imageUrl;
-        await new Promise((resolve) => { img.onload = resolve; });
 
+        // Wait for the test image to load into memory
+        await new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = () => {
+                console.error("Failed to load test image.");
+                resolve();
+            }
+        });
+
+        // Pass the HTML image element to ml5 to get the prediction
         classifierRef.current.classify(img, callback);
     }, []);
+
 
     return {
         isModelLoaded,

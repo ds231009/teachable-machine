@@ -5,11 +5,11 @@ function TeachableMachine() {
     const { isModelLoaded, trainingStatus, currentLoss, prepareAndTrain, classify } = useFeatureExtractor();
 
     const [dataset, setDataset] = useState([
-        {className: "Class 1", items: ["a","b","v"]},
-        {className: "Class 2", items: ["a","b","v"]}
+        {className: "Class 1", items: []},
+        {className: "Class 2", items: []}
     ])
-    const [modelTrained, setModelTrained] = useState(false)
     const [changingClassname, setChangingClassname] = useState(null)
+    const [prediction, setPrediction] = useState(null);
 
     const handleUpload = (event, classID) => {
         const files = Array.from(event.target.files);
@@ -56,6 +56,21 @@ function TeachableMachine() {
         prepareAndTrain(dataset);
     };
 
+    const handleTestUpload = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const testImageUrl = URL.createObjectURL(file);
+        classify(testImageUrl, (error, results) => {
+            if (error) {
+                console.error(error);
+                return;
+            }
+            // 'results' is already the exact array you asked for!
+            setPrediction(results);
+        });
+    };
+
     return (
         <>
             <header> HEADER </header>
@@ -88,7 +103,7 @@ function TeachableMachine() {
                                 </div>
                                 {classDataset.items.map((item, j) =>
                                     <div key={j}>
-                                        <span>{item}</span>
+                                        <img src={item} style={{ width: '100px' }} />
                                         <button type="button" onClick={(e) => handleDelete(i,j)}>Delete</button>
                                     </div>
                                 )}
@@ -97,26 +112,58 @@ function TeachableMachine() {
                                     multiple
                                     accept="image/*"
                                     onChange={(e)=> handleUpload(e,i)}
-                                    disabled={modelTrained}
+                                    disabled={trainingStatus !== "idle" && trainingStatus !== "ready"}
                                 />
                             </div>
                         )}
-                        <button onClick={(e) => handleAddClass(e)} >New class</button>
+                        <button
+                            onClick={(e) => handleAddClass(e)}
+                            disabled={trainingStatus !== "idle" && trainingStatus !== "ready"}
+                        >
+                            New class
+                        </button>
                     </div>
                 </section>
                 <section>
                     <h3>Train Model</h3>
+                    {!isModelLoaded
+                        ? <div>Model loading</div>
+                        : null
+                    }
                     <button
                         onClick={(e) => {
-                            setModelTrained(true)
                             handleTrain()
                         }}
                     >
                         Train
                     </button>
+                    <div>{trainingStatus}</div>
                 </section>
                 <section>
                     <h3>Classification</h3>
+
+                    {/* Only show the test input if the model is fully trained */}
+                    {trainingStatus === "ready" ? (
+                        <div>
+                            <input type="file" accept="image/*" onChange={handleTestUpload} />
+
+                            {/* If we have a prediction array, map through it */}
+                            {prediction && (
+                                <div style={{ marginTop: "1rem" }}>
+                                    <h4>Results:</h4>
+                                    <ul>
+                                        {prediction.map((item, index) => (
+                                            <li key={index}>
+                                                <strong>{item.label}:</strong> {(item.confidence * 100).toFixed(2)}%
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <p>Train the model first to unlock classification!</p>
+                    )}
                 </section>
                 <footer>FOOTER</footer>
             </main>
