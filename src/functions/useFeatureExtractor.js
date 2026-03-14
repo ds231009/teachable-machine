@@ -93,23 +93,26 @@ export const useFeatureExtractor = () => {
         });
     }, []);
 
-    const classify = useCallback(async (imageUrl, callback) => {
+    const classify = useCallback(async (input, callback) => {
         if (!classifierRef.current) return;
 
-        const img = new Image();
-        img.src = imageUrl;
-
-        // Wait for the test image to load into memory
-        await new Promise((resolve) => {
-            img.onload = resolve;
-            img.onerror = () => {
-                console.error("Failed to load test image.");
-                resolve();
-            }
-        });
-
-        // Pass the HTML image element to ml5 to get the prediction
-        classifierRef.current.classify(img, callback);
+        // If the input is a string (a file upload URL), convert it to an Image
+        if (typeof input === 'string') {
+            const img = new Image();
+            img.src = input;
+            await new Promise((resolve) => {
+                img.onload = resolve;
+                img.onerror = () => {
+                    console.error("Failed to load test image.");
+                    resolve();
+                }
+            });
+            classifierRef.current.classify(img, callback);
+        }
+        // If it's already an HTML element (like our videoRef.current), pass it directly!
+        else {
+            classifierRef.current.classify(input, callback);
+        }
     }, []);
 
 

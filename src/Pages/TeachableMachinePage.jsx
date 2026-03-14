@@ -1,5 +1,10 @@
 import {useState} from "react";
 import { useFeatureExtractor } from '../functions/useFeatureExtractor.js';
+import ClassCard from "../components/ClassCard.jsx";
+import Button from "../ui/button.jsx";
+import Prediction from "../components/PredictionCard.jsx";
+
+import styles from "./TeachableMachinePage.module.css";
 
 function TeachableMachine() {
     const { isModelLoaded, trainingStatus, currentLoss, prepareAndTrain, classify } = useFeatureExtractor();
@@ -46,14 +51,20 @@ function TeachableMachine() {
         );
     };
 
-    const handleAddClass = (event) => {
+    const handleAddClass = () => {
         let newClass = {className: "Class " + (dataset.length + 1), items:  []};
-        console.log(length);
+        console.log(dataset.length);
         setDataset(prev => [...prev, newClass])
     };
 
     const handleTrain = () => {
         prepareAndTrain(dataset);
+    };
+
+    const handleWebcamCapture = (classIndex, imageString) => {
+        setDataset(prev => prev.map((cls, i) =>
+            i === classIndex ? { ...cls, items: [...cls.items, imageString] } : cls
+        ));
     };
 
     const handleTestUpload = (event) => {
@@ -73,55 +84,41 @@ function TeachableMachine() {
 
     return (
         <>
-            <header> HEADER </header>
+            <header className={styles.header}>
+                <div>USTP</div>
+                <div>SAINT</div>
+            </header>
             <main>
-                <div>
+                <section className={styles.hero}>
                     <h1>
-                        Hero Section
+                        Teachable Machine with TensorFlow.js
                     </h1>
-                </div>
-                <section>
+                    <p>
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel sapien eget nunc efficitur varius. Sed at felis a enim efficitur commodo. In hac habitasse platea dictumst. Nulla facilisi. Donec ac odio a nisl convallis tincidunt. Suspendisse potenti.
+                    </p>
+                </section>
+                <section className={styles.classes}>
                     <h3>Classes {changingClassname}</h3>
-                    <div>
-                        {dataset.map((classDataset, i) =>
-                            <div key={i}>
-                                <div>
-                                    {changingClassname !== i
-                                        ? <div>{classDataset.className} </div>
-                                        : <>
-                                            <input
-                                                type="text"
-                                                // placeholder="Classname"
-                                                value = {classDataset.className}
-                                                onChange={(e) => handleClassnameChange(e,i)}
-                                            />
-                                            <button onClick={(e) => setChangingClassname(null)}>Save</button>
-                                        </>
-                                    }
-                                    <button onClick={(e) => setChangingClassname(i)}>changeName</button>
-                                    <button>Delete</button>
-                                </div>
-                                {classDataset.items.map((item, j) =>
-                                    <div key={j}>
-                                        <img src={item} style={{ width: '100px' }} />
-                                        <button type="button" onClick={(e) => handleDelete(i,j)}>Delete</button>
-                                    </div>
-                                )}
-                                <input
-                                    type="file"
-                                    multiple
-                                    accept="image/*"
-                                    onChange={(e)=> handleUpload(e,i)}
-                                    disabled={trainingStatus !== "idle" && trainingStatus !== "ready"}
-                                />
-                            </div>
+                    <div className={styles.classContainer}>
+                        {dataset.map((classData, i) =>
+                               <ClassCard
+                                    key={i}
+                                    classIndex={i}
+                                    classData={classData}
+                                    onUpload={handleUpload}
+                                    onDelete={handleDelete}
+                                    onWebcamCapture={handleWebcamCapture} // <-- Add this new prop!
+                                    onNameChange={handleClassnameChange}
+                                    isTraining={trainingStatus}
+                               />
                         )}
-                        <button
+                        <Button
                             onClick={(e) => handleAddClass(e)}
                             disabled={trainingStatus !== "idle" && trainingStatus !== "ready"}
+                            variant={"default"}
                         >
                             New class
-                        </button>
+                        </Button>
                     </div>
                 </section>
                 <section>
@@ -130,42 +127,25 @@ function TeachableMachine() {
                         ? <div>Model loading</div>
                         : null
                     }
-                    <button
+                    <Button
                         onClick={(e) => {
                             handleTrain()
                         }}
                     >
                         Train
-                    </button>
+                    </Button>
                     <div>{trainingStatus}</div>
                 </section>
-                <section>
-                    <h3>Classification</h3>
-
-                    {/* Only show the test input if the model is fully trained */}
-                    {trainingStatus === "ready" ? (
-                        <div>
-                            <input type="file" accept="image/*" onChange={handleTestUpload} />
-
-                            {/* If we have a prediction array, map through it */}
-                            {prediction && (
-                                <div style={{ marginTop: "1rem" }}>
-                                    <h4>Results:</h4>
-                                    <ul>
-                                        {prediction.map((item, index) => (
-                                            <li key={index}>
-                                                <strong>{item.label}:</strong> {(item.confidence * 100).toFixed(2)}%
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <p>Train the model first to unlock classification!</p>
-                    )}
-                </section>
-                <footer>FOOTER</footer>
+                    <Prediction
+                        trainingStatus={trainingStatus}
+                        prediction={prediction}
+                        handleTestUpload={handleTestUpload}
+                        classify={classify}
+                        setPrediction={setPrediction}
+                    />
+                <footer className={"w-max px-4 py-2 flex justify-start"}>
+                    contributors...
+                </footer>
             </main>
         </>
     )
