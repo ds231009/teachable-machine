@@ -1,126 +1,172 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import * as tf from '@tensorflow/tfjs';
 
 export const useFeatureExtractor = () => {
     const [isModelLoaded, setIsModelLoaded] = useState(false);
-    const [trainingStatus, setTrainingStatus] = useState('idle'); // idle, preparing, training, ready
+    const [trainingStatus, setTrainingStatus] = useState('idle');
     const [currentLoss, setCurrentLoss] = useState(null);
 
-    const featureExtractorRef = useRef(null);
-    const classifierRef = useRef(null);
+    // TF.js Model Refs
+    const mobilenetRef = useRef(null);
+    const customModelRef = useRef(null);
+    // We need to save the class names to map the math output [0, 1] back to ["Dogs", "Cats"]
+    const classLabelsRef = useRef([]);
 
     useEffect(() => {
-        if (classifierRef.current) return;
+        const loadModel = async () => {
+            console.log("Downloading MobileNet v1...");
+            // Load the raw MobileNet model directly from Google's servers
+            const mobilenet = await tf.loadLayersModel(
+                'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_1.0_224/model.json'
+            );
 
-        const initML5 = async () => {
-            // 1. Load MobileNet (This is the heavy part that takes time)
-            featureExtractorRef.current = window.ml5.featureExtractor('MobileNet', () => {
-                console.log('MobileNet features loaded!');
+            // SLICE THE MODEL: We don't want it to classify 1000 generic objects.
+            // We want the raw visual features from the last mathematical layer.
+            const layer = mobilenet.getLayer('conv_pw_13_relu');
+            mobilenetRef.current = tf.model({ inputs: mobilenet.inputs, outputs: layer.output });
 
-                // 2. Initialize classifier (Synchronous in v0.12.2 when no video is passed)
-                classifierRef.current = featureExtractorRef.current.classification();
+            // Warm up the GPU (prevents freezing on the first webcam frame)
+            tf.tidy(() => { mobilenetRef.current.predict(tf.zeros([1, 224, 224, 3])); });
 
-                console.log('Classifier initialized!');
-                // 3. Manually trigger the state update
-                setIsModelLoaded(true);
-            });
+            console.log("MobileNet Feature Extractor Ready!");
+            setIsModelLoaded(true);
         };
 
-        if (window.ml5) initML5();
+        loadModel();
     }, []);
 
-    // Takes the React dataset, loads images into memory, feeds ml5, and trains
-    // Takes your React dataset array, loads images into memory, feeds ml5, and trains
-    const prepareAndTrain = useCallback(async (currentDataset) => {
-        if (!classifierRef.current) return;
+    // Helper: Converts an HTML Image or Video element into a cropped 224x224 Tensor
+    const processImageToTensor = (imgElement) => {
+        return tf.tidy(() => {
+            // Convert to tensor, ensure 3 color channels, resize to 224x224, and normalize between -1 and 1
+            const imgTensor = tf.browser.fromPixels(imgElement);
+            const resized = tf.image.resizeBilinear(imgTensor, [224, 224]);
+            const normalized = resized.div(tf.scalar(127.5)).sub(tf.scalar(1.0));
+            return normalized.expandDims(0); // Add batch dimension: [1, 224, 224, 3]
+        });
+    };
 
+    const prepareAndTrain = useCallback(async (currentDataset) => {
+        if (!mobilenetRef.current) return;
         setTrainingStatus('preparing');
 
-        let totalImages = 0;
+        // 1. Gather all labels and initialize Tensors
+        const classNames = currentDataset.map(c => c.className);
+        classLabelsRef.current = classNames;
+        const numClasses = classNames.length;
 
-        // 1. Loop through your array of class objects natively
-        for (const classObj of currentDataset) {
+        const xsArray = []; // Features
+        const ysArray = []; // Labels
 
-            // 2. Loop through the image URLs in each class
-            // 1. Loop through your array of class objects natively
-            for (const classObj of currentDataset) {
+        // 2. Loop through UI Data and extract features via WebGL
+        for (let classIndex = 0; classIndex < currentDataset.length; classIndex++) {
+            const classObj = currentDataset[classIndex];
 
-                // Skip empty classes so TensorFlow doesn't crash trying to classify "nothing"
-                if (classObj.items.length === 0) continue;
+            for (const imageUrl of classObj.items) {
+                const img = new Image();
+                img.src = imageUrl;
+                await new Promise((resolve) => { img.onload = resolve; });
 
-                // 2. Loop through the image URLs in each class
-                for (const imageUrl of classObj.items) {
-                    totalImages++;
+                // CRITICAL FIX: Return the tensors from tidy so they aren't destroyed!
+                const { featureTensor, labelTensor } = tf.tidy(() => {
+                    const imgTensor = processImageToTensor(img);
+                    const features = mobilenetRef.current.predict(imgTensor);
 
-                    const img = new Image();
-                    img.src = imageUrl;
+                    return {
+                        featureTensor: features.squeeze(),
+                        labelTensor: tf.oneHot(tf.tensor1d([classIndex], 'int32'), numClasses).squeeze()
+                    };
+                });
 
-                    // Step A: Wait for the image to physically load into browser memory
-                    await new Promise((resolve) => {
-                        img.onload = resolve;
-                        img.onerror = () => {
-                            console.error("Failed to load image:", imageUrl);
-                            resolve();
-                        };
-                    });
-
-                    // Step B: CRITICAL FIX - Wait for ml5 to extract the features
-                    await new Promise((resolve) => {
-                        classifierRef.current.addImage(img, classObj.className, () => {
-                            // This callback fires only when TensorFlow is done with the image
-                            resolve();
-                        });
-                    });
-                }
+                xsArray.push(featureTensor);
+                ysArray.push(labelTensor);
             }
         }
 
-        // Safety Check: Prevent TensorFlow from crashing on empty data
-        if (totalImages === 0) {
-            alert("Whoops! Please upload at least one image before training.");
+        if (xsArray.length === 0) {
+            alert("Please upload images before training.");
             setTrainingStatus('idle');
             return;
         }
 
         setTrainingStatus('training');
 
-        // Start the training loop
-        classifierRef.current.train((loss) => {
-            if (loss !== null) {
-                setCurrentLoss(loss);
-            } else {
-                setTrainingStatus('ready');
+        // Stack our arrays into massive Data Tensors
+        const xs = tf.stack(xsArray);
+        const ys = tf.stack(ysArray);
+
+        // CLEANUP FIX: Now that they are safely stacked, delete the individual tensors from memory
+        tf.dispose(xsArray);
+        tf.dispose(ysArray);
+
+        // 3. Build our Custom Neural Network Head
+        customModelRef.current = tf.sequential({
+            layers: [
+                tf.layers.flatten({ inputShape: mobilenetRef.current.outputs[0].shape.slice(1) }),
+                tf.layers.dense({ units: 100, activation: 'relu' }),
+                tf.layers.dense({ units: numClasses, activation: 'softmax' })
+            ]
+        });
+
+        // 4. Compile the Model (Adam Optimizer)
+        customModelRef.current.compile({
+            optimizer: tf.train.adam(0.0001),
+            loss: 'categoricalCrossentropy',
+            metrics: ['accuracy']
+        });
+
+        // 5. Train the Model!
+        await customModelRef.current.fit(xs, ys, {
+            epochs: 20,
+            callbacks: {
+                onEpochEnd: async (epoch, logs) => {
+                    setCurrentLoss(logs.loss.toFixed(4));
+                    await tf.nextFrame();
+                }
             }
         });
+
+        // Clean up our massive training tensors from GPU memory
+        tf.dispose([xs, ys]);
+        setTrainingStatus('ready');
     }, []);
 
     const classify = useCallback(async (input, callback) => {
-        if (!classifierRef.current) return;
+        if (!mobilenetRef.current || !customModelRef.current) return;
 
-        // If the input is a string (a file upload URL), convert it to an Image
+        let imgElement = input;
+
+        // If it's a file upload string, load it into an Image object first
         if (typeof input === 'string') {
-            const img = new Image();
-            img.src = input;
-            await new Promise((resolve) => {
-                img.onload = resolve;
-                img.onerror = () => {
-                    console.error("Failed to load test image.");
-                    resolve();
-                }
-            });
-            classifierRef.current.classify(img, callback);
+            imgElement = new Image();
+            imgElement.src = input;
+            await new Promise((resolve) => { imgElement.onload = resolve; });
         }
-        // If it's already an HTML element (like our videoRef.current), pass it directly!
-        else {
-            classifierRef.current.classify(input, callback);
-        }
+
+        // Run Inference
+        tf.tidy(() => {
+            const imgTensor = processImageToTensor(imgElement);
+
+            // 1. Get MobileNet Features
+            const features = mobilenetRef.current.predict(imgTensor);
+
+            // 2. Pass through our Custom Head
+            const predictions = customModelRef.current.predict(features);
+
+            // 3. Extract the Softmax array
+            const probabilities = predictions.dataSync();
+
+            // 4. Format exactly like ml5 so the UI doesn't break
+            const results = Array.from(probabilities)
+                .map((prob, index) => ({
+                    label: classLabelsRef.current[index],
+                    confidence: prob
+                }))
+                .sort((a, b) => b.confidence - a.confidence);
+
+            callback(null, results);
+        });
     }, []);
 
-
-    return {
-        isModelLoaded,
-        trainingStatus,
-        currentLoss,
-        prepareAndTrain,
-        classify,
-    };
+    return { isModelLoaded, trainingStatus, currentLoss, prepareAndTrain, classify };
 };

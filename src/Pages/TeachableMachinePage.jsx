@@ -13,7 +13,6 @@ function TeachableMachine() {
         {className: "Class 1", items: []},
         {className: "Class 2", items: []}
     ])
-    const [changingClassname, setChangingClassname] = useState(null)
     const [prediction, setPrediction] = useState(null);
 
     const handleUpload = (event, classID) => {
@@ -28,6 +27,7 @@ function TeachableMachine() {
             )
         );
     };
+
     const handleDelete = (classID, itemID) => {
         setDataset(prev => (
             prev.map((cls, i) =>
@@ -77,7 +77,6 @@ function TeachableMachine() {
                 console.error(error);
                 return;
             }
-            // 'results' is already the exact array you asked for!
             setPrediction(results);
         });
     };
@@ -98,7 +97,6 @@ function TeachableMachine() {
                     </p>
                 </section>
                 <section className={styles.classes}>
-                    <h3>Classes {changingClassname}</h3>
                     <div className={styles.classContainer}>
                         {dataset.map((classData, i) =>
                                <ClassCard
@@ -112,13 +110,16 @@ function TeachableMachine() {
                                     isTraining={trainingStatus}
                                />
                         )}
+                        <div>
+
                         <Button
-                            onClick={(e) => handleAddClass(e)}
-                            disabled={trainingStatus !== "idle" && trainingStatus !== "ready"}
-                            variant={"default"}
-                        >
-                            New class
-                        </Button>
+                                onClick={(e) => handleAddClass(e)}
+                                disabled={trainingStatus !== "idle" && trainingStatus !== "ready"}
+                                variant={"default"}
+                            >
+                                New class
+                            </Button>
+                        </div>
                     </div>
                 </section>
                 <section>
@@ -143,7 +144,7 @@ function TeachableMachine() {
                         classify={classify}
                         setPrediction={setPrediction}
                     />
-                <footer className={"w-max px-4 py-2 flex justify-start"}>
+                <footer>
                     contributors...
                 </footer>
             </main>

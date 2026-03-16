@@ -27,25 +27,24 @@ function Prediction({
 
 
     return (
-        <section className="flex flex-col gap-8 my-16">
-            <h3 className="p-4 text-2xl font-semibold">Classification</h3>
+        <section>
+            <h3>Classification</h3>
             {trainingStatus !== "ready"
             ?
-                <div className="p-4 bg-gray-50 text-gray-500 italic">
+                <div>
                     <span>
                         Train the model first to unlock classification!
                     </span>
                 </div>
             :
             (
-                <div className="flex flex-row justify-center">
-                    <div className="w-128 flex flex-col gap-6">
-                        <div className="p-4 border rounded-lg shadow-sm">
+                <div>
+                    <div>
+                        <div>
                             {imageURL && !isLiveActive &&
                                 <img
                                     src={imageURL}
                                     alt="Classification Input"
-                                    className="w-64 h-64 rounded-lg object-contain bg-gray-200"
                                 />
                             }
                             {isLiveActive & !imageURL &&
@@ -56,7 +55,7 @@ function Prediction({
                                     onPredict={setPrediction}
                                 />
                             }
-                            <div className="flex justify-between w-full items-center">
+                            <div>
                                 <Button onClick={() => handleCustomButtonClick()}>Upload</Button>
                                 <input
                                     type="file"
@@ -77,13 +76,13 @@ function Prediction({
                             </div>
                         </div>
                     </div>
-                    <div className="w-128 p-6 rounded-lg">
-                        <h4 className="font-bold text-xl mb-4">Prediction Results</h4>
+                    <div>
+                        <h4>Prediction Results</h4>
                         {prediction ? (
-                            <ul className="flex flex-col gap-4">
+                            <ul>
                                 {prediction.map((item, index) => (
                                     <li key={index} className="flex flex-col">
-                                        <div className="flex justify-between font-medium mb-1">
+                                        <div>
                                             <span>{item.label}</span>
                                             <span>{(item.confidence * 100).toFixed(1)}%</span>
                                         </div>
@@ -101,7 +100,7 @@ function Prediction({
                                 ))}
                             </ul>
                         ) : (
-                            <p className="text-gray-500 italic">
+                            <p>
                                 Upload an image or step in front of the camera to see results.
                             </p>
                         )}
