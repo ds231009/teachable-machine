@@ -117,3 +117,11 @@ export const UploadIcon = (props) => {
         </>
     )
 }
+
+export const AddIcon = (props) => {
+    return (
+        <>
+            <path {...props} d="M5 12H19M12 5V19" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </>
+    )
+}

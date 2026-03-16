@@ -1,6 +1,10 @@
-
+:root {
+  --color-blue-400: rgb(0,116,204);
+  --color-blue-500: rgb(4, 90, 156);
+}
 body {
   margin: 0;
+  background-color: #eee;
 }
 
 
@@ -26,10 +30,25 @@ button {
   align-items: center;
   justify-content: center;
   text-align: center;
-  background-color: rgb(0,116,204);
+  gap: 0.5rem;
+  background-color: var(--color-blue-400);
   color: white;
+  border: none;
+  outline: none !important;
+  transition: all 0.2s ease-in-out;
 }
 
+
+button:hover {
+  background-color: var(--color-blue-500);
+  /*transform: scale(1.0125);*/
+  transition: 0.2s all ease-in-out;
+}
+
+button:active {
+  background-color: var(--color-blue-500);
+  box-shadow: 0 0 12px rgba(0,0,0,0.25) inset;
+}
 
 header {
   padding: 1rem 2rem;
@@ -39,3 +58,49 @@ header {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
 }
+
+footer {
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  list-style-type: none;
+}
+footer div {
+  justify-items: start;
+}
+
+section {
+  padding: 8rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+h2 {
+  font-size: 2.2rem;
+  font-weight: 600;
+}
+
+h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+h5 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+p {
+  font-size: 1.25rem;
+  max-width: 800px;
+}
+

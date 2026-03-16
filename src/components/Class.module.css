@@ -1,13 +1,13 @@
 .class {
-    width: 512px;
-    min-height: 256px;
+    width: 384px;
+    height: 256px;
+    background-color: #fff;
     display: flex;
     flex-direction: column;
     align-items: start;
     justify-content: space-between;
     gap: 0.5rem;
     padding: 1rem;
-    border: 1px solid #ccc;
     border-radius: 8px;
 }
 
@@ -17,22 +17,19 @@
     align-items: center;
     justify-content: space-between;
 }
-.classHeader h5 {
-    font-size: 1.5rem;
-    font-weight: 600;
-}
 
 .classHeader div {
     display: flex;
     gap: 0.5rem;
 }
-.classHeader input {
+.inputClassname {
     font-size: 1.25rem;
+    max-width: 240px;
     padding: 0.25rem 0.5rem;
     background-color: #f0f0f0;
     border-radius: 4px;
 }
-.classHeader button {}
+
 
 .classGallery {
     max-width: 100%;

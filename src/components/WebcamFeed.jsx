@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Button from '../ui/button.jsx';
+import {CameraIcon, FocusIcon, Icon, UploadIcon} from "../ui/Icons.jsx";
+import styles from "../ui/Button.module.css"
 
 export default function WebcamFeed({ onCapture, isTraining }) {
     const videoRef = useRef(null);
@@ -84,11 +86,14 @@ export default function WebcamFeed({ onCapture, isTraining }) {
                 onTouchStart={startRecording} // For mobile screens
                 onTouchEnd={stopRecording}
                 disabled={isTraining}
-                className={`px-4 py-2 rounded font-medium text-white select-none transition-colors ${
-                    isTraining ? 'bg-gray-400 cursor-not-allowed' :
-                        isRecording ? 'bg-red-600' : 'bg-blue-600 hover:bg-blue-700'
+                className={`${
+                    isTraining ? styles.alarm :
+                        isRecording ? styles.alarm : ''
                 }`}
             >
+                <Icon colors={["#ffffff"]}>
+                    <FocusIcon />
+                </Icon>
                 {isRecording ? "Recording..." : "Hold to Record"}
             </button>
         </div>

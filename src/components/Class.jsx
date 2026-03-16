@@ -3,7 +3,7 @@ import Button from "../ui/button.jsx";
 import WebcamFeed from "./WebcamFeed.jsx";
 
 import styles from "./Class.module.css";
-import {Icon, PencilIcon, UploadIcon, XIcon} from "../ui/Icons.jsx";
+import {CameraIcon, CameraOffIcon, Icon, PencilIcon, UploadIcon, XIcon} from "../ui/Icons.jsx";
 
 function Class({
         classIndex,
@@ -29,11 +29,14 @@ function Class({
         <div className={styles.classHeader}>
             {!isEditingName
                 ? <h5>{classData.className} </h5>
-                : <input
+                : (
+                <input
+                    className={styles.inputClassname}
                     type="text"
                     value = {classData.className}
                     onChange={(e) => onNameChange(e,classIndex)}
                 />
+                )
             }
             <div>
                 {!isEditingName
@@ -56,7 +59,7 @@ function Class({
                 <Button
                     ariaLabel={"Delete Class"}
                     variants={["transparent","icon"]}>
-                    <Icon>
+                    <Icon colors={["crimson"]}>
                         <XIcon />
                     </Icon>
                 </Button>
@@ -87,7 +90,7 @@ function Class({
             }
             <div className={styles.classUploadButtons}>
                 <Button
-                    ariaLabel={"Upload image from device"}
+                    ariaLabel={"Upload image from device for training"}
                     onClick={handleCustomButtonClick}
                     disabled={isTraining !== "idle" && isTraining !== "ready"}
                 >
@@ -107,8 +110,27 @@ function Class({
 
                 />
                 {isCameraActive
-                    ? <Button onClick={()=> setIsCameraActive(false)}>Stop</Button>
-                    : <Button onClick={()=> setIsCameraActive(true)}>Take picture</Button>
+                    ?
+                    <Button
+                        variants={["alarm"]}
+                        ariaLabel="Close Camera Input"
+                        onClick={()=> setIsCameraActive(false)}
+                    >
+                        <Icon colors={["#ffffff"]}>
+                            <CameraOffIcon />
+                        </Icon>
+                        Close Camera
+                    </Button>
+                    :
+                    <Button
+                        ariaLabel={"Open camera input"}
+                        onClick={()=> setIsCameraActive(true)}
+                    >
+                        <Icon colors={["#ffffff"]}>
+                            <CameraIcon />
+                        </Icon>
+                        Open Camera
+                    </Button>
                 }
             </div>
         </div>

@@ -2,12 +2,13 @@ import {useEffect, useState} from "react";
 import { useFeatureExtractor } from '../functions/useFeatureExtractor.js';
 import Class from "../components/Class.jsx";
 import Button from "../ui/button.jsx";
-import Prediction from "../components/PredictionCard.jsx";
+import Prediction from "../components/Prediction.jsx";
 
 import * as tf from '@tensorflow/tfjs';
 
 
 import styles from "./TeachableMachinePage.module.css";
+import {AddIcon, CameraOffIcon, Icon, PlayIcon} from "../ui/Icons.jsx";
 
 function TeachableMachine() {
     const { isModelLoaded, trainingStatus, currentLoss, prepareAndTrain, classify } = useFeatureExtractor();
@@ -131,6 +132,7 @@ function TeachableMachine() {
 
                 {/* Class section for defining classes and uploading pictures*/}
                 <section className={styles.classes}>
+                    <h2>Classes</h2>
                     <div className={styles.classContainer}>
                         {dataset.map((classData, i) =>
                                <Class
@@ -144,13 +146,15 @@ function TeachableMachine() {
                                     isTraining={trainingStatus}
                                />
                         )}
-                        <div>
-
-                        <Button
+                        <div className={styles.addButton}>
+                            <Button
                                 onClick={(e) => handleAddClass(e)}
                                 disabled={trainingStatus !== "idle" && trainingStatus !== "ready"}
                                 variant={"default"}
                             >
+                                <Icon colors={["#ffffff"]}>
+                                    <AddIcon />
+                                </Icon>
                                 New class
                             </Button>
                         </div>
@@ -158,20 +162,25 @@ function TeachableMachine() {
                 </section>
 
                 {/*Model information and start training*/}
-                <section>
-                    <h3>Train Model</h3>
-                    {!isModelLoaded
-                        ? <div>Model loading</div>
-                        : null
-                    }
+                <section className={styles.trainModelCon}>
+                    {/*<h2>Train Model</h2>*/}
                     <Button
-                        onClick={(e) => {
+                        variants={["hero"]}
+                        onClick={() => {
                             handleTrain()
                         }}
                     >
-                        Train
+                        <Icon colors={["#ffffff"]}>
+                            <PlayIcon />
+                        </Icon>
+                        Train Model
                     </Button>
-                    <div>{trainingStatus}</div>
+                    {!isModelLoaded ? <div>Model loading...</div>
+                        : trainingStatus === "ready" ? <div>Model trained</div>
+                            : trainingStatus === "preparing" ? <div>Training Model</div>
+                                : <div>Initialised Model</div>
+                    }
+                    {trainingStatus}
                 </section>
 
                 {/*Picture Classification or live classification*/}
@@ -189,7 +198,12 @@ function TeachableMachine() {
 
                 {/*Footer for contributors and tech stack*/}
                 <footer>
-                    contributors...
+                    <div>
+                        <li>Julian Pecho</li>
+                        <li>Sebastian Eresheim</li>
+                        <li>Lukas Metzler</li>
+                        <li>Fabian Fuchs</li>
+                    </div>
                 </footer>
             </main>
         </>
