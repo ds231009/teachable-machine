@@ -2,9 +2,10 @@ import {useState, useRef} from "react";
 import Button from "../ui/button.jsx";
 import WebcamFeed from "./WebcamFeed.jsx";
 
-import styles from "../Pages/TeachableMachinePage.module.css";
+import styles from "./Class.module.css";
+import {Icon, PencilIcon, UploadIcon, XIcon} from "../ui/Icons.jsx";
 
-function ClassCard({
+function Class({
         classIndex,
         classData,
         onUpload,
@@ -36,17 +37,43 @@ function ClassCard({
             }
             <div>
                 {!isEditingName
-                    ? <Button onClick={() => setIsEditingName(true)}>changeName</Button>
-                    : <Button onClick={() => setIsEditingName(false)}>Save</Button>
+                    ? <Button
+                        ariaLabel={"Change Class name"}
+                        variants={["transparent","icon"]}
+                        onClick={() => setIsEditingName(true)}
+                    >
+                        <Icon>
+                            <PencilIcon />
+                        </Icon>
+                    </Button>
+                    : <Button
+                        ariaLabel={"Save name change"}
+                        onClick={() => setIsEditingName(false)}
+                    >
+                        Save
+                    </Button>
                 }
-                <Button>Delete</Button>
+                <Button
+                    ariaLabel={"Delete Class"}
+                    variants={["transparent","icon"]}>
+                    <Icon>
+                        <XIcon />
+                    </Icon>
+                </Button>
             </div>
         </div>
         <div className={styles.classGallery}>
             {classData.items.map((item, j) =>
                 <div key={j} className={styles.classPicture}>
-                    <img src={item}/>
-                    <button type="button" onClick={() => onDelete(classIndex,j)}>x</button>
+                    <img src={item} alt="" />
+                    <Button
+                        ariaLabel={"Delete image"}
+                        variants={["transparent", "icon", "small"]}
+                        onClick={() => onDelete(classIndex,j)}>
+                        <Icon size={10}>
+                            <XIcon />
+                        </Icon>
+                    </Button>
                 </div>
             )}
         </div>
@@ -60,11 +87,14 @@ function ClassCard({
             }
             <div className={styles.classUploadButtons}>
                 <Button
-                    variant="default"
+                    ariaLabel={"Upload image from device"}
                     onClick={handleCustomButtonClick}
                     disabled={isTraining !== "idle" && isTraining !== "ready"}
                 >
-                    Upload
+                    <Icon colors={["#ffffff"]}>
+                        <UploadIcon />
+                    </Icon>
+                    <span>Upload Image</span>
                 </Button>
                 <input
                     style={{display: "none"}}
@@ -86,4 +116,4 @@ function ClassCard({
     )
 }
 
-export default ClassCard
+export default Class

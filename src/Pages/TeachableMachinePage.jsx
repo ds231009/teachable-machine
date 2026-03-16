@@ -1,8 +1,11 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import { useFeatureExtractor } from '../functions/useFeatureExtractor.js';
-import ClassCard from "../components/ClassCard.jsx";
+import Class from "../components/Class.jsx";
 import Button from "../ui/button.jsx";
 import Prediction from "../components/PredictionCard.jsx";
+
+import * as tf from '@tensorflow/tfjs';
+
 
 import styles from "./TeachableMachinePage.module.css";
 
@@ -13,7 +16,17 @@ function TeachableMachine() {
         {className: "Class 1", items: []},
         {className: "Class 2", items: []}
     ])
+
     const [prediction, setPrediction] = useState(null);
+    const [heatmap, setHeatmap] = useState(null);
+
+    useEffect(() => {
+        return () => {
+            console.log("Teachable Machine unmounted. ");
+            tf.disposeVariables();
+            tf.engine().reset();
+        };
+    }, []);
 
     const handleUpload = (event, classID) => {
         const files = Array.from(event.target.files);
@@ -72,22 +85,41 @@ function TeachableMachine() {
         if (!file) return;
 
         const testImageUrl = URL.createObjectURL(file);
-        classify(testImageUrl, (error, results) => {
+        classify(testImageUrl, (error, data) => {
             if (error) {
                 console.error(error);
                 return;
             }
-            setPrediction(results);
+            // Update both states from the static image too!
+            setPrediction(data.results);
+            setHeatmap(data.heatmapUrl);
         });
     };
 
     return (
         <>
-            <header className={styles.header}>
-                <div>USTP</div>
-                <div>SAINT</div>
+            <header>
+                <div className={styles.ustpLogoCon}>
+                    <img
+                        src={"/ustp-logo.png"}
+                        alt={"USTP logo"}
+                    />
+                </div>
+                <div className={styles.stepsCon}>
+                    <div>① Upload Images</div>
+                    <div>② Train Model</div>
+                    <div>③ Classify</div>
+                </div>
+                <div className={styles.eudresLogoCon}>
+                    <img
+                        src={"/eudres-logo.png"}
+                        alt={"Eudres logo"}
+                    />
+                </div>
             </header>
             <main>
+
+                {/*Hero section with description*/}
                 <section className={styles.hero}>
                     <h1>
                         Teachable Machine with TensorFlow.js
@@ -96,10 +128,12 @@ function TeachableMachine() {
                         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel sapien eget nunc efficitur varius. Sed at felis a enim efficitur commodo. In hac habitasse platea dictumst. Nulla facilisi. Donec ac odio a nisl convallis tincidunt. Suspendisse potenti.
                     </p>
                 </section>
+
+                {/* Class section for defining classes and uploading pictures*/}
                 <section className={styles.classes}>
                     <div className={styles.classContainer}>
                         {dataset.map((classData, i) =>
-                               <ClassCard
+                               <Class
                                     key={i}
                                     classIndex={i}
                                     classData={classData}
@@ -122,6 +156,8 @@ function TeachableMachine() {
                         </div>
                     </div>
                 </section>
+
+                {/*Model information and start training*/}
                 <section>
                     <h3>Train Model</h3>
                     {!isModelLoaded
@@ -137,13 +173,21 @@ function TeachableMachine() {
                     </Button>
                     <div>{trainingStatus}</div>
                 </section>
-                    <Prediction
-                        trainingStatus={trainingStatus}
-                        prediction={prediction}
-                        handleTestUpload={handleTestUpload}
-                        classify={classify}
-                        setPrediction={setPrediction}
-                    />
+
+                {/*Picture Classification or live classification*/}
+                <Prediction
+                    trainingStatus={trainingStatus}
+                    prediction={prediction}
+                    heatmap={heatmap}
+                    handleTestUpload={handleTestUpload}
+                    classify={classify}
+                    setPrediction={(data) => {
+                        setPrediction(data.results);
+                        setHeatmap(data.heatmapUrl);
+                    }}
+                />
+
+                {/*Footer for contributors and tech stack*/}
                 <footer>
                     contributors...
                 </footer>

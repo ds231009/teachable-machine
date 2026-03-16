@@ -5,6 +5,7 @@ import LiveClassifier from "./LiveClassifier.jsx";
 function Prediction({
         trainingStatus,
         prediction,
+        heatmap,
         handleTestUpload,
         classify,
         setPrediction
@@ -53,8 +54,16 @@ function Prediction({
                                     isReady={trainingStatus === "ready"}
                                     isActive={isLiveActive}
                                     onPredict={setPrediction}
+                                        // We pass this back up through the prop you created in Step 2!
                                 />
                             }
+                            {heatmap && isLiveActive && (
+                                <img
+                                    src={heatmap}
+                                    alt="AI Attention Heatmap"
+                                    className="absolute top-0 left-0 w-full h-full object-cover rounded-lg pointer-events-none mix-blend-screen opacity-80"
+                                />
+                            )}
                             <div>
                                 <Button onClick={() => handleCustomButtonClick()}>Upload</Button>
                                 <input

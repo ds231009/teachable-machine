@@ -33,6 +33,26 @@ export const useFeatureExtractor = () => {
         };
 
         loadModel();
+
+        return () => {
+            console.log("Component unmounting: Scrubbing GPU memory...");
+            if (mobilenetRef.current) {
+                mobilenetRef.current.dispose();
+            }
+            if (customModelRef.current) {
+                customModelRef.current.dispose();
+            }
+            // If you want to be absolutely sure EVERYTHING is gone:
+            // tf.disposeVariables();
+        };
+    }, []);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const mem = tf.memory();
+            console.log(`GPU Tensors: ${mem.numTensors} | Memory: ${(mem.numBytes / 1024 / 1024).toFixed(2)} MB`);
+        }, 2000);
+        return () => clearInterval(interval);
     }, []);
 
     // Helper: Converts an HTML Image or Video element into a cropped 224x224 Tensor
@@ -135,37 +155,76 @@ export const useFeatureExtractor = () => {
         if (!mobilenetRef.current || !customModelRef.current) return;
 
         let imgElement = input;
-
-        // If it's a file upload string, load it into an Image object first
         if (typeof input === 'string') {
             imgElement = new Image();
             imgElement.src = input;
             await new Promise((resolve) => { imgElement.onload = resolve; });
         }
 
-        // Run Inference
-        tf.tidy(() => {
+        // 1. DO THE MATH: We wrap the heavy lifting in tidy to prevent memory leaks
+        const { rgbaTensor, results } = tf.tidy(() => {
             const imgTensor = processImageToTensor(imgElement);
 
-            // 1. Get MobileNet Features
+            // Forward Pass
             const features = mobilenetRef.current.predict(imgTensor);
-
-            // 2. Pass through our Custom Head
             const predictions = customModelRef.current.predict(features);
 
-            // 3. Extract the Softmax array
-            const probabilities = predictions.dataSync();
-
-            // 4. Format exactly like ml5 so the UI doesn't break
-            const results = Array.from(probabilities)
+            // Format Results
+            const results = Array.from(predictions.dataSync())
                 .map((prob, index) => ({
                     label: classLabelsRef.current[index],
-                    confidence: prob
+                    confidence: prob,
+                    classIndex: index
                 }))
                 .sort((a, b) => b.confidence - a.confidence);
 
-            callback(null, results);
+            // --- THE GRAD-CAM MAGIC ---
+            const topClassIndex = results[0].classIndex;
+
+            // A function that takes feature maps and returns the score of the WINNING class
+            const getScore = (featureMap) => customModelRef.current.predict(featureMap).slice([0, topClassIndex], [1, 1]).squeeze();
+
+            // Calculate the gradients (the derivative of the score with respect to the features)
+            const gradFunction = tf.grad(getScore);
+            const gradients = gradFunction(features);
+
+            // Average the gradients spatially to get the "importance weights" for each channel
+            const weights = tf.mean(gradients, [1, 2]);
+
+            // Multiply the features by their importance weights and combine them
+            const weightedFeatures = features.mul(weights.reshape([1, 1, 1, -1]));
+            const heatmap = tf.sum(weightedFeatures, 3);
+
+            // Apply ReLU (only keep positive influences) and normalize between 0 and 1
+            const reluHeatmap = tf.relu(heatmap);
+            const max = tf.max(reluHeatmap);
+            const min = tf.min(reluHeatmap);
+            // We add 1e-7 to the denominator so we never accidentally divide by zero!
+            const normalizedHeatmap = reluHeatmap.sub(min).div(max.sub(min).add(tf.scalar(1e-7)));
+
+            // Resize back to 224x224
+            const resizedHeatmap = tf.image.resizeBilinear(normalizedHeatmap.expandDims(-1), [224, 224]).squeeze();
+
+            // Create a Red RGBA visual layer.
+            // Red = 1.0, Green = 0.0, Blue = 0.0, Alpha = the heatmap intensity
+            const zeros = tf.zerosLike(resizedHeatmap);
+            const ones = tf.onesLike(resizedHeatmap);
+            const rgba = tf.stack([ones, zeros, zeros, resizedHeatmap], -1);
+
+            return { rgbaTensor: rgba, results };
         });
+
+        // 2. DRAW THE VISUAL: Convert the raw Tensor into a base64 Image URL
+        const canvas = document.createElement('canvas');
+        canvas.width = 224;
+        canvas.height = 224;
+        await tf.browser.toPixels(rgbaTensor, canvas);
+
+        // 3. CLEANUP: Manually delete the tensor now that we have drawn it
+        rgbaTensor.dispose();
+
+        // 4. Send both the predictions AND the heatmap back to the UI
+        callback(null, { results, heatmapUrl: canvas.toDataURL() });
     }, []);
 
     return { isModelLoaded, trainingStatus, currentLoss, prepareAndTrain, classify };

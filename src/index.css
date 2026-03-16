@@ -16,44 +16,26 @@ body {
 }
 
 button {
+  height: 2rem;
   padding: 0.5em 1em;
   font-size: 1em;
   cursor: pointer;
-  height: fit-content;
-    border-radius: 9999px;
+  border-radius: 88px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-color: rgb(0,116,204);
+  color: white;
 }
 
-/*.inputfile {*/
-/*  width: 0.1px;*/
-/*  height: 0.1px;*/
-/*  opacity: 0;*/
-/*  overflow: hidden;*/
-/*  position: absolute;*/
-/*  z-index: -1;*/
-/*}*/
 
-/*.inputfile + label {*/
-/*  font-size: 1.25em;*/
-/*  font-weight: 700;*/
-/*  color: white;*/
-/*  background-color: black;*/
-/*  display: inline-block;*/
-/*}*/
-
-/*.inputfile:focus + label,*/
-/*.inputfile + label:hover {*/
-/*  background-color: red;*/
-/*}*/
-
-/*.inputfile + label {*/
-/*  cursor: pointer; !* "hand" cursor *!*/
-/*}*/
-
-/*.inputfile:focus + label {*/
-/*  outline: 1px dotted #000;*/
-/*  outline: -webkit-focus-ring-color auto 5px;*/
-/*}*/
-
-/*.inputfile + label * {*/
-/*  pointer-events: none;*/
-/*}*/
+header {
+  padding: 1rem 2rem;
+  /*display: flex;*/
+  /*align-items: center;*/
+  /*justify-content: space-between;*/
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}

@@ -1,8 +1,20 @@
-.header {
-    padding: 1rem 2rem;
+
+
+.ustpLogoCon {
+    width: 10rem;
+}
+
+.eudresLogoCon {
+    justify-self: end;
+    width: 8rem;
+}
+
+.stepsCon {
+    /*display: grid;*/
+    /*grid-template-columns: repeat(3, 1fr);*/
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: row;
+    gap: 1rem;
 }
 
 .hero {
@@ -45,94 +57,3 @@
     padding: 0 2rem;
     white-space: nowrap;
 }
-
-.class {
-    width: 512px;
-    min-height: 256px;
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-    justify-content: space-between;
-    gap: 0.5rem;
-    padding: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-}
-
-.classHeader {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.classHeader h5 {
-    font-size: 1.5rem;
-    font-weight: 600;
-}
-
-.classHeader div {
-    display: flex;
-    gap: 0.5rem;
-}
-.classHeader input {
-    font-size: 1.25rem;
-    padding: 0.25rem 0.5rem;
-    background-color: #f0f0f0;
-    border-radius: 4px;
-}
-.classHeader button {}
-
-.classGallery {
-    max-width: 100%;
-    max-height: 240px;
-    overflow-x: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    justify-content: start;
-    align-items: start;
-}
-
-.classPicture {
-    position: relative;
-}
-
-.classPicture > button {
-    position: absolute;
-    top: 0.25rem;
-    right: 0.25rem;
-    background-color: rgba(255, 255, 255, 0.8);
-    border: none;
-    padding: 0.25rem;
-    cursor: pointer;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    text-align: center;
-    align-content: center;
-    justify-content: center;
-}
-
-.classPicture > img {
-    width: 64px;
-    height: 64px;
-    object-fit: cover;
-    border-radius: 8px;
-    filter: saturate(80%);
-}
-
-.classUpload {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: center;
-}
-.classUploadButtons {
-    width: 100%;
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    justify-content: space-between;
-}
-

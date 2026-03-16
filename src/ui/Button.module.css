@@ -1,0 +1,17 @@
+.icon, .transparentIcon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 8px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon {
+    background: rgb(0,116,204);
+}
+
+.transparent {
+    background: transparent;
+}

@@ -1,25 +1,24 @@
+import styles from "./Button.module.css"
+import clsx from "clsx"
+
 function Button({
     children,
-    variant = "default",
+    ariaLabel,
+    variants = ["default"],
     onClick,
     disabled
     }) {
 
-    const baseStyles = "px-4 py-2 whitespace-nowrap rounded-xxl font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
-
-    const variants = {
-        icon: "",
-        default: "bg-blue-600 text-white hover:bg-blue-700",
-        primary: "bg-blue-600 text-white hover:bg-blue-700",
-        danger: "bg-red-500 text-white hover:bg-red-600",
-        outline: "border-2 border-gray-300 text-gray-700 hover:bg-gray-100"
-    };
+    const className = clsx(
+        variants.map(v => styles[v])
+    )
 
     return (
         <button
+            aria-label={ariaLabel}
             onClick={onClick}
             disabled={disabled}
-            className={`${baseStyles} ${variants[variant]}`}
+            className={className}
         >
             {children}
         </button>
