@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import styles from "./LiveClassifier.module.css"
 
 export default function LiveClassifier({ classify, isReady, isActive, onPredict }) {
     const videoRef = useRef(null);
@@ -68,8 +69,8 @@ export default function LiveClassifier({ classify, isReady, isActive, onPredict 
             muted
             // NEW: Fire this event when the browser officially has video data
             onLoadedData={() => setIsVideoReady(true)}
-            className={`max-w-[128px] rounded-lg border-4 object-cover aspect-square transition-all ${
-                isActive ? 'border-green-500 opacity-100' : 'border-gray-300 grayscale opacity-60'
+            className={`${styles.live} ${
+                isActive ? styles.active : styles.inactive
             }`}
         />
     );

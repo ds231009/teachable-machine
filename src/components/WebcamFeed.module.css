@@ -1,0 +1,7 @@
+.webcam {
+    width: 192px;
+    height: 192px;
+    border-radius: 4px;
+    object-fit: cover;
+    aspect-ratio: 1 / 1;
+}

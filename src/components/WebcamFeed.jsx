@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Button from '../ui/button.jsx';
 import {CameraIcon, FocusIcon, Icon, UploadIcon} from "../ui/Icons.jsx";
-import styles from "../ui/Button.module.css"
+import styles from "./WebcamFeed.module.css"
 
 export default function WebcamFeed({ onCapture, isTraining }) {
     const videoRef = useRef(null);
@@ -75,7 +75,7 @@ export default function WebcamFeed({ onCapture, isTraining }) {
                 autoPlay
                 playsInline
                 muted
-                className={`max-w-[128px] rounded-lg border-4 object-cover bg-black aspect-square transition-colors ${isRecording ? 'border-red-500' : 'border-gray-300'}`}
+                className={styles.webcam}
             />
 
             {/* Native button for raw event listeners to handle the hold-to-record */}

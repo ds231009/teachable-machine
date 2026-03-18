@@ -23,6 +23,7 @@ button {
   height: 2rem;
   padding: 0.5em 1em;
   font-size: 1em;
+  font-weight: 500;
   cursor: pointer;
   border-radius: 88px;
   white-space: nowrap;
@@ -41,7 +42,6 @@ button {
 
 button:hover {
   background-color: var(--color-blue-500);
-  /*transform: scale(1.0125);*/
   transition: 0.2s all ease-in-out;
 }
 
@@ -81,7 +81,7 @@ section {
 h1 {
   font-size: 3rem;
   margin-bottom: 1rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 h2 {

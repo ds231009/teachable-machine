@@ -8,14 +8,14 @@ import * as tf from '@tensorflow/tfjs';
 
 
 import styles from "./TeachableMachinePage.module.css";
-import {AddIcon, CameraOffIcon, Icon, PlayIcon} from "../ui/Icons.jsx";
+import {AddIcon, AlertIcon, CameraOffIcon, CheckIcon, Icon, PlayIcon} from "../ui/Icons.jsx";
 
 function TeachableMachine() {
     const { isModelLoaded, trainingStatus, currentLoss, prepareAndTrain, classify } = useFeatureExtractor();
 
     const [dataset, setDataset] = useState([
-        {className: "Class 1", items: []},
-        {className: "Class 2", items: []}
+        {name: "Class 1", items: [], id: 0},
+        {name: "Class 2", items: [], id: 1}
     ])
 
     const [prediction, setPrediction] = useState(null);
@@ -53,20 +53,25 @@ function TeachableMachine() {
         console.log(dataset)
     };
 
+    const handleClassDelete = (classID) => {
+        setDataset(prev => prev.filter((_, index) => index !== classID));
+        console.log(dataset)
+    };
+
     const handleClassnameChange = (event, classID) => {
         const newName = event.target.value;
 
         setDataset(prev =>
             prev.map((cls, i) =>
                 i === classID
-                    ? { ...cls, className: newName }
+                    ? { ...cls, name: newName }
                     : cls
             )
         );
     };
 
     const handleAddClass = () => {
-        let newClass = {className: "Class " + (dataset.length + 1), items:  []};
+        let newClass = {name: "Class " + (dataset.length + 1), items:  []};
         console.log(dataset.length);
         setDataset(prev => [...prev, newClass])
     };
@@ -93,6 +98,7 @@ function TeachableMachine() {
             }
             // Update both states from the static image too!
             setPrediction(data.results);
+            console.log("Data", data)
             setHeatmap(data.heatmapUrl);
         });
     };
@@ -141,6 +147,7 @@ function TeachableMachine() {
                                     classData={classData}
                                     onUpload={handleUpload}
                                     onDelete={handleDelete}
+                                    onClassDelete={handleClassDelete}
                                     onWebcamCapture={handleWebcamCapture} // <-- Add this new prop!
                                     onNameChange={handleClassnameChange}
                                     isTraining={trainingStatus}
@@ -150,12 +157,11 @@ function TeachableMachine() {
                             <Button
                                 onClick={(e) => handleAddClass(e)}
                                 disabled={trainingStatus !== "idle" && trainingStatus !== "ready"}
-                                variant={"default"}
+                                variants={["icon"]}
                             >
                                 <Icon colors={["#ffffff"]}>
                                     <AddIcon />
                                 </Icon>
-                                New class
                             </Button>
                         </div>
                     </div>
@@ -163,7 +169,7 @@ function TeachableMachine() {
 
                 {/*Model information and start training*/}
                 <section className={styles.trainModelCon}>
-                    {/*<h2>Train Model</h2>*/}
+                    <h2>Train Model</h2>
                     <Button
                         variants={["hero"]}
                         onClick={() => {
@@ -175,11 +181,46 @@ function TeachableMachine() {
                         </Icon>
                         Train Model
                     </Button>
-                    {!isModelLoaded ? <div>Model loading...</div>
-                        : trainingStatus === "ready" ? <div>Model trained</div>
-                            : trainingStatus === "preparing" ? <div>Training Model</div>
-                                : <div>Initialised Model</div>
-                    }
+                    <div className={styles.alerts}>
+                        {!isModelLoaded ? <div>Model loading...</div>
+                            : trainingStatus === "ready" ? <div>Model trained</div>
+                                : trainingStatus === "preparing" ? <div>Training Model</div>
+                                    : <div>Initialised Model</div>
+                        }
+                        {dataset.length < 2
+                            ?
+                            <div className={styles.alert}>
+                                <Icon colors={["crimson"]}>
+                                    <AlertIcon />
+                                </Icon>
+                                <span>You need at least 2 classes</span>
+                            </div>
+                            :
+                            <div className={styles.alert}>
+                                <Icon colors={["mediumseagreen"]}>
+                                    <CheckIcon />
+                                </Icon>
+                                <span>You have more than 2 classes</span>
+                            </div>
+                        }
+                        {dataset.map((classData, i) =>
+                            classData.items.length < 15
+                                ?
+                                <div className={styles.alert}>
+                                    <Icon colors={["crimson"]}>
+                                        <AlertIcon />
+                                    </Icon>
+                                    <span key={i}><b>{classData.name}</b> only has {classData.items.length} item{classData.items.length === 1 ? "" : "s"}</span>
+                                </div>
+                                :
+                                <div className={styles.alert}>
+                                    <Icon colors={["mediumseagreen"]}>
+                                        <CheckIcon />
+                                    </Icon>
+                                    <span key={i}><b>{classData.name}</b> has {classData.items.length} items</span>
+                                </div>
+                        )}
+                    </div>
                     {trainingStatus}
                 </section>
 

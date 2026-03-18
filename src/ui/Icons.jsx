@@ -125,3 +125,19 @@ export const AddIcon = (props) => {
         </>
     )
 }
+export const AlertIcon = (props) => {
+    return (
+        <>
+            <path {...props} d="M12 8V12M12 16H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </>
+    )
+}
+
+
+export const CheckIcon = (props) => {
+    return (
+        <>
+            <path {...props} d="M8 11L10 13L14 9M21 11C21 16.5228 16.5228 21 11 21C5.47715 21 1 16.5228 1 11C1 5.47715 5.47715 1 11 1C16.5228 1 21 5.47715 21 11Z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </>
+    )
+}

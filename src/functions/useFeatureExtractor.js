@@ -71,7 +71,7 @@ export const useFeatureExtractor = () => {
         setTrainingStatus('preparing');
 
         // 1. Gather all labels and initialize Tensors
-        const classNames = currentDataset.map(c => c.className);
+        const classNames = currentDataset.map(c => c.name);
         classLabelsRef.current = classNames;
         const numClasses = classNames.length;
 

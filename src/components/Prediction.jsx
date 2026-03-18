@@ -4,6 +4,7 @@ import LiveClassifier from "./LiveClassifier.jsx";
 
 import styles from "./Predection.module.css";
 import {CameraIcon, Icon, UploadIcon} from "../ui/Icons.jsx";
+import ProgressBar from "../ui/ProgressBar.jsx";
 
 function Prediction({
         trainingStatus,
@@ -28,6 +29,11 @@ function Prediction({
         setIsLiveActive(false); // Pause the live feed!
         handleTestUpload(e);    // Run the static prediction
     };
+
+    const sorted = prediction
+        ? [...prediction].sort((a, b) => a.classIndex - b.classIndex)
+        : null;
+
 
 
     return (
@@ -58,74 +64,99 @@ function Prediction({
                                         // We pass this back up through the prop you created in Step 2!
                                 />
                             }
-                            {/*{heatmap && isLiveActive && (*/}
+                            {heatmap && isLiveActive && (
                                 <img
                                     src={heatmap}
                                     alt="AI Attention Heatmap"
                                 />
-                            {/*)}*/}
+                            )}
+                            {!imageURL && !isLiveActive &&
+                                <div className={styles.inplaceButtons}>
+                                    <Button
+                                        variants={["icon"]}
+                                        ariaLabel={"Upload image from device for classification"}
+                                        onClick={() => handleCustomButtonClick()}
+                                    >
+                                        <Icon colors={["#ffffff"]}>
+                                            <UploadIcon />
+                                        </Icon>
+                                    </Button>
+                                    <Button
+                                        ariaLabel={"Toggle camera input for classification"}
+                                        variants={["icon"]}
+                                        onClick={() => {
+                                            setImageURL(null);
+                                            setIsLiveActive(!isLiveActive)
+                                        }}
+                                    >
+                                        <Icon colors={["#ffffff"]}>
+                                            <CameraIcon />
+                                        </Icon>
+                                    </Button>
+                                </div>
+                            }
                         </div>
-                        <div className={styles.uploadButton}>
-                            <Button
-                                ariaLabel={"Upload image from device for classification"}
-                                onClick={() => handleCustomButtonClick()}
-                            >
-                                <Icon colors={["#ffffff"]}>
-                                    <UploadIcon />
-                                </Icon>
-                                <span>Upload Image</span>
-                            </Button>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={onFileUpload}
-                                ref={hiddenFileInput}
-                                style={{ display: "none" }}
-                            />
-                            <Button
-                                ariaLabel={"Toggle camera input for classification"}
-                                variant={isLiveActive ? "danger" : "primary"}
-                                onClick={() => {
-                                    setImageURL(null);
-                                    setIsLiveActive(!isLiveActive)
-                                }}
-                            >
-                                <Icon colors={["#ffffff"]}>
-                                    <CameraIcon />
-                                </Icon>
-                                {isLiveActive ? "Close Camera" : "Open Camera"}
-                            </Button>
-                        </div>
+                        {!isLiveActive && !imageURL
+                            ?
+                            <span>
+                                Upload an image or use the camera for classification.
+                            </span>
+                            :
+                            <div className={styles.uploadButton}>
+                                <Button
+                                    variants={["icon"]}
+                                    ariaLabel={"Upload image from device for classification"}
+                                    onClick={() => handleCustomButtonClick()}
+                                >
+                                    <Icon colors={["#ffffff"]}>
+                                        <UploadIcon />
+                                    </Icon>
+                                </Button>
+                                <Button
+                                    ariaLabel={"Toggle camera input for classification"}
+                                    variants={[isLiveActive ? "danger" : "primary"]}
+                                    onClick={() => {
+                                        setImageURL(null);
+                                        setIsLiveActive(!isLiveActive)
+                                    }}
+                                >
+                                    <Icon colors={["#ffffff"]}>
+                                        <CameraIcon />
+                                    </Icon>
+                                    {isLiveActive ? "Close Camera" : "Open Camera"}
+                                </Button>
+                            </div>
+                        }
                     </div>
                     <div className={styles.rightColumn}>
                         <h3>Prediction Results</h3>
-                        {prediction ? (
+                        {sorted ? (
                             <div className={styles.predictionTable}>
-                                {prediction.map((item, index) => (
+                                {sorted.map((item, index) => (
                                     <Fragment key={index}>
                                         <span>{item.label}</span>
-                                        <span>{(item.confidence * 100).toFixed(1)}%</span>
+                                        <span>{(!isLiveActive && !imageURL ? 0 : item.confidence * 100).toFixed(1)}%</span>
                                         {/* Visual Progress Bar */}
-                                        <div className={styles.progressBar}>
-                                            <div
-                                                style={{
-                                                    width: `${item.confidence * 100}%`,
-                                                    transition: "width 0.15s ease-out"
-                                                }}
-                                            />
-                                        </div>
+                                        <ProgressBar color={`hsl(${!isLiveActive && !imageURL ? 0 : item.classIndex*80},70%,60%)`} variant={"fixed"} progress={!isLiveActive && !imageURL ? 0 : item.confidence} />
                                     </Fragment>
                                 ))}
                             </div>
                         ) : (
-                            <p>
-                                Upload an image or step in front of the camera to see results.
-                            </p>
+                            <span>
+                                Upload an image or step in front of <br /> the camera to see results.
+                            </span>
                         )}
                     </div>
                 </div>
             )
             }
+            <input
+                type="file"
+                accept="image/*"
+                onChange={onFileUpload}
+                ref={hiddenFileInput}
+                style={{ display: "none" }}
+            />
         </section>
     );
 }
