@@ -14,7 +14,7 @@ function Button({
         variants.map(v => styles[v])
     )
 
-    const finalTitle = title || ariaLabel
+    const finalTitle = title
 
     return (
         <button

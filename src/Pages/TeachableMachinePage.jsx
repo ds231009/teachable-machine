@@ -28,9 +28,6 @@ function TeachableMachine() {
     const trainSectionRef = useRef(null);
     const heroSectionRef = useRef(null);
 
-    useEffect(() => {
-        console.log(isModelLoaded ? "DA": "NE",trainingStatus)
-    }, [isModelLoaded,trainingStatus]);
 
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
@@ -39,13 +36,15 @@ function TeachableMachine() {
                     setActiveSection(entry.target.id);
                 }
             });
-        }, { threshold: 0.5 }); // 0.5 means 50% of the section is visible
+        }, { threshold: 0.5 ,
+            rootMargin: "-40% 0px -40% 0px"}); // 0.5 means 50% of the section is visible
 
         const sections = document.querySelectorAll("section");
         sections.forEach((section) => observer.observe(section));
 
         return () => observer.disconnect(); // Cleanup
     }, []);
+
     useEffect(() => {
         return () => {
             console.log("Teachable Machine unmounted. ");
@@ -108,7 +107,7 @@ function TeachableMachine() {
     useEffect(() => {
         if (trainingStatus === "ready" && predictionSectionRef.current) {
             setTimeout(() => {
-                predictionSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                predictionSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 500);
         }
     }, [trainingStatus]); // <-- This array tells React to run this effect whenever this variable changes
@@ -146,11 +145,12 @@ function TeachableMachine() {
                     <Button
                         key={id}
                         variants={["transparent"]}
-                        onClick={() => section.sectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                        onClick={() => section.sectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                     >
-                        <span className={activeSection === section.sectionId ? styles.activeNav : styles.passiveNav}>
-                            <b>{id}</b>{section.text}
-                        </span>
+                        <div className={`${styles.navNum} ${activeSection === section.sectionId ? styles.active : styles.passive}`}
+                        ><b>{id}</b></div>
+                        <span className={`${styles.navText} ${activeSection === section.sectionId ? styles.active : styles.passive}`}
+                        >{section.text}</span>
                     </Button>
                 )}
             </nav>
@@ -264,7 +264,7 @@ function TeachableMachine() {
                     </div>
                     <Button
                         variants={["transparent"]}
-                        onClick={() => trainSectionRef.current ? trainSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }) : null}
+                        onClick={() => trainSectionRef.current ? trainSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' }) : null}
                     >
                         Continue
                     </Button>

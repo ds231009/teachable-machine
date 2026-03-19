@@ -41,13 +41,40 @@ button.hero {
 }
 
 button.hero {
+    position: relative;
     min-width: 164px;
     height: 3rem;
     font-size: 1.25rem;
     font-weight: 600;
     border-radius: 8px;
+    /*background-color: transparent;*/
+    background-color: var(--color-blue-400);
+    transition: all 0.2s ease-in-out;
+    overflow: hidden;
+}
+button.hero:hover {
+    background-color: transparent;
+    box-shadow: 2px 2px 16px rgba(1, 13, 19, 0.25) inset, 2px 2px 8px rgba(255, 255, 255, 1);
 }
 
-/*button.trained {*/
-/*    background-image: linear-gradient(-45deg,var(--color-blue-500), var(--color-blue-400));*/
-/*}*/
+button.hero::after {
+    position: absolute;
+    content: "";
+    width: 200px;
+    height: 200px;
+
+    margin: auto;
+    border-radius: inherit;
+    z-index: -1;
+    background-image: linear-gradient(-45deg, var(--color-blue-600), var(--color-blue-300));
+    animation: rotate 3s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
