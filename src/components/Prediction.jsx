@@ -55,7 +55,7 @@ function Prediction({
                                     alt="Classification Input"
                                 />
                             }
-                            {isLiveActive & !imageURL &&
+                            {isLiveActive && !imageURL &&
                                 <LiveClassifier
                                     classify={classify}
                                     isReady={trainingStatus === "ready"}
@@ -73,8 +73,9 @@ function Prediction({
                             {!imageURL && !isLiveActive &&
                                 <div className={styles.inplaceButtons}>
                                     <Button
-                                        variants={["icon"]}
                                         ariaLabel={"Upload image from device for classification"}
+                                        title={"Upload image"}
+                                        variants={["icon"]}
                                         onClick={() => handleCustomButtonClick()}
                                     >
                                         <Icon colors={["#ffffff"]}>
@@ -83,6 +84,7 @@ function Prediction({
                                     </Button>
                                     <Button
                                         ariaLabel={"Toggle camera input for classification"}
+                                        title={"Open Camera"}
                                         variants={["icon"]}
                                         onClick={() => {
                                             setImageURL(null);
@@ -104,8 +106,9 @@ function Prediction({
                             :
                             <div className={styles.uploadButton}>
                                 <Button
-                                    variants={["icon"]}
                                     ariaLabel={"Upload image from device for classification"}
+                                    title={"Upload image"}
+                                    variants={["icon"]}
                                     onClick={() => handleCustomButtonClick()}
                                 >
                                     <Icon colors={["#ffffff"]}>
@@ -114,6 +117,7 @@ function Prediction({
                                 </Button>
                                 <Button
                                     ariaLabel={"Toggle camera input for classification"}
+                                    title={isLiveActive ? "Close Camera" : "Open Camera"}
                                     variants={[isLiveActive ? "danger" : "primary"]}
                                     onClick={() => {
                                         setImageURL(null);

@@ -25,7 +25,7 @@ button {
   font-size: 1em;
   font-weight: 500;
   cursor: pointer;
-  border-radius: 88px;
+  border-radius: 4px;
   white-space: nowrap;
   display: flex;
   align-items: center;
@@ -39,10 +39,8 @@ button {
   transition: all 0.2s ease-in-out;
 }
 
-
 button:hover {
   background-color: var(--color-blue-500);
-  transition: 0.2s all ease-in-out;
 }
 
 button:active {
@@ -67,7 +65,10 @@ footer {
   list-style-type: none;
 }
 footer div {
+  display: flex;
+  flex-direction: column;
   justify-items: start;
+  align-items: start;
 }
 
 section {
@@ -102,5 +103,14 @@ h5 {
 p {
   font-size: 1.25rem;
   max-width: 800px;
+  color: #333;
+}
+
+span {
+  color: #424242;
+}
+
+b {
+  color: #1e1e1e;
 }
 

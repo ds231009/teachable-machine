@@ -4,6 +4,7 @@ import clsx from "clsx"
 function Button({
     children,
     ariaLabel,
+    title,
     variants = ["default"],
     onClick,
     disabled
@@ -13,8 +14,11 @@ function Button({
         variants.map(v => styles[v])
     )
 
+    const finalTitle = title || ariaLabel
+
     return (
         <button
+            title={finalTitle}
             aria-label={ariaLabel}
             onClick={onClick}
             disabled={disabled}

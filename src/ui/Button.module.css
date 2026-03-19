@@ -12,10 +12,6 @@ button.icon {
     background: rgb(0,116,204);
 }
 
-button.icon:hover {
-    transform: scale(1.05);
-}
-
 button.transparent {
     background: transparent;
     color: var(--color-blue-400);

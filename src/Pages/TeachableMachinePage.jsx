@@ -8,7 +8,7 @@ import * as tf from '@tensorflow/tfjs';
 
 
 import styles from "./TeachableMachinePage.module.css";
-import {AddIcon, AlertIcon, CameraOffIcon, CheckIcon, Icon, PlayIcon} from "../ui/Icons.jsx";
+import {AddIcon, AlertIcon, CameraOffIcon, CheckIcon, ChevronIcon, Icon, PlayIcon} from "../ui/Icons.jsx";
 
 function TeachableMachine() {
     const { isModelLoaded, trainingStatus, currentLoss, prepareAndTrain, classify } = useFeatureExtractor();
@@ -20,6 +20,7 @@ function TeachableMachine() {
 
     const [prediction, setPrediction] = useState(null);
     const [heatmap, setHeatmap] = useState(null);
+    const [showDescription, setShowDescription] = useState(false);
 
     useEffect(() => {
         return () => {
@@ -127,19 +128,33 @@ function TeachableMachine() {
             <main>
 
                 {/*Hero section with description*/}
-                <section className={styles.hero}>
+                <section className={`${styles.hero} ${showDescription ? styles.active : ""}`}>
                     <h1>
                         Teachable Machine with TensorFlow.js
                     </h1>
                     <p>
                         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel sapien eget nunc efficitur varius. Sed at felis a enim efficitur commodo. In hac habitasse platea dictumst. Nulla facilisi. Donec ac odio a nisl convallis tincidunt. Suspendisse potenti.
                     </p>
+                    <div className={`${styles.description} ${showDescription ? styles.active : ""}`}>
+                        <span style={{minHeight: 0}}>Extra blabla</span>
+                    </div>
+                    <Button
+                        ariaLabel={"Expand project description"}
+                        variants={["transparent"]}
+                        onClick={() => setShowDescription(showDescription => !showDescription)}
+                    >
+                        <Icon>
+                            <ChevronIcon />
+                        </Icon>
+                        {!showDescription ? "Learn more" : ""}
+                    </Button>
                 </section>
 
                 {/* Class section for defining classes and uploading pictures*/}
                 <section className={styles.classes}>
                     <h2>Classes</h2>
                     <div className={styles.classContainer}>
+                        <div style={{width: "24px"}}></div>
                         {dataset.map((classData, i) =>
                                <Class
                                     key={i}
@@ -155,9 +170,10 @@ function TeachableMachine() {
                         )}
                         <div className={styles.addButton}>
                             <Button
+                                ariaLabel={"Add Class"}
+                                variants={["icon"]}
                                 onClick={(e) => handleAddClass(e)}
                                 disabled={trainingStatus !== "idle" && trainingStatus !== "ready"}
-                                variants={["icon"]}
                             >
                                 <Icon colors={["#ffffff"]}>
                                     <AddIcon />
@@ -170,11 +186,11 @@ function TeachableMachine() {
                 {/*Model information and start training*/}
                 <section className={styles.trainModelCon}>
                     <h2>Train Model</h2>
+                    <span>Now that we defined our classes we can train the model on our images.</span>
                     <Button
+                        ariaLabel={"Train Model"}
                         variants={["hero"]}
-                        onClick={() => {
-                            handleTrain()
-                        }}
+                        onClick={() => {handleTrain()}}
                     >
                         <Icon colors={["#ffffff"]}>
                             <PlayIcon />
@@ -200,7 +216,7 @@ function TeachableMachine() {
                                 <Icon colors={["mediumseagreen"]}>
                                     <CheckIcon />
                                 </Icon>
-                                <span>You have more than 2 classes</span>
+                                <span>You have more than <b>2 classes</b></span>
                             </div>
                         }
                         {dataset.map((classData, i) =>
@@ -221,7 +237,6 @@ function TeachableMachine() {
                                 </div>
                         )}
                     </div>
-                    {trainingStatus}
                 </section>
 
                 {/*Picture Classification or live classification*/}

@@ -3,7 +3,7 @@ import Button from "../ui/button.jsx";
 import WebcamFeed from "./WebcamFeed.jsx";
 
 import styles from "./Class.module.css";
-import {CameraIcon, CameraOffIcon, Icon, PencilIcon, UploadIcon, XIcon} from "../ui/Icons.jsx";
+import {CameraIcon, CameraOffIcon, CheckIcon, Icon, PencilIcon, UploadIcon, XIcon} from "../ui/Icons.jsx";
 import ProgressBar from "../ui/ProgressBar.jsx";
 
 function Class({
@@ -38,13 +38,11 @@ function Class({
                         variants={["transparent","icon"]}
                         onClick={() => setIsEditingName(true)}
                     >
-                        <Icon>
-                            <PencilIcon />
-                        </Icon>
+                        <Icon><PencilIcon /></Icon>
                     </Button>
                 </div>
                 : (
-                <div>
+                <div style={{ display: "flex", alignItems: "center" }}>
                     <input
                         className={styles.inputClassname}
                         type="text"
@@ -63,8 +61,9 @@ function Class({
             <div>
                 <Button
                     ariaLabel={"Delete Class"}
+                    variants={["transparent","icon"]}
                     onClick={() => onClassDelete(classIndex)}
-                    variants={["transparent","icon"]}>
+                >
                     <Icon colors={["crimson"]}>
                         <XIcon />
                     </Icon>
@@ -78,7 +77,8 @@ function Class({
                     <Button
                         ariaLabel={"Delete image"}
                         variants={["transparent", "icon", "small"]}
-                        onClick={() => onDelete(classIndex,j)}>
+                        onClick={() => onDelete(classIndex,j)}
+                    >
                         <Icon size={10}>
                             <XIcon />
                         </Icon>
@@ -98,13 +98,12 @@ function Class({
                 <div className={styles.classUploadButtons}>
                     <Button
                         ariaLabel={"Upload image from device for training"}
+                        title={"Upload image"}
+                        variants={["icon"]}
                         onClick={handleCustomButtonClick}
                         disabled={isTraining !== "idle" && isTraining !== "ready"}
-                        variants={["icon"]}
                     >
-                        <Icon colors={["#ffffff"]}>
-                            <UploadIcon />
-                        </Icon>
+                        <Icon colors={["#ffffff"]}><UploadIcon /></Icon>
                     </Button>
                     <input
                         style={{display: "none"}}
@@ -119,8 +118,9 @@ function Class({
                     {isCameraActive
                         ?
                         <Button
-                            variants={["transparent","alarm"]}
                             ariaLabel="Close Camera Input"
+                            title={"Close Camera"}
+                            variants={["transparent","alarm"]}
                             onClick={()=> setIsCameraActive(false)}
                         >
                             <Icon colors={["crimson"]}>
@@ -131,8 +131,9 @@ function Class({
                         :
                         <Button
                             ariaLabel={"Open camera input"}
-                            onClick={()=> setIsCameraActive(true)}
+                            title={"Open Camera"}
                             variants={["transparent"]}
+                            onClick={()=> setIsCameraActive(true)}
                         >
                             <Icon>
                                 <CameraIcon />

@@ -25,6 +25,14 @@
     padding: 2rem;
 }
 
+.hero.active svg {
+    transform: rotate(180deg);
+}
+
+.hero svg {
+    transition: all 0.25s ease-in-out;
+    transform: rotate(0);
+}
 
 
 .classes {
@@ -65,4 +73,16 @@
     flex-direction: row;
     align-items: center;
     gap: 0.5rem;
+}
+
+.description {
+    transition: all 0.4s ease-in-out;
+    display: grid;
+    grid-template-rows: 0fr;
+    overflow: hidden;
+}
+.description.active {
+    display: grid;
+    grid-template-rows: 1fr;
+    overflow: hidden;
 }

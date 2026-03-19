@@ -20,6 +20,7 @@ export const Icon = ({
     return (
         <svg viewBox="0 0 24 24"
              className={`icon icon--${variant} ${className || ""}`}
+             style={{pointerEvents: 'none'}}
              width={size}
              height={size}
         >
@@ -138,6 +139,14 @@ export const CheckIcon = (props) => {
     return (
         <>
             <path {...props} d="M8 11L10 13L14 9M21 11C21 16.5228 16.5228 21 11 21C5.47715 21 1 16.5228 1 11C1 5.47715 5.47715 1 11 1C16.5228 1 21 5.47715 21 11Z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </>
+    )
+}
+
+export const ChevronIcon = (props) => {
+    return (
+        <>
+            <path {...props} d="M6 9L12 15L18 9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </>
     )
 }
