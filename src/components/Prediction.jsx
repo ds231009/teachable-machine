@@ -3,7 +3,7 @@ import Button from "../ui/button.jsx";
 import LiveClassifier from "./LiveClassifier.jsx";
 
 import styles from "./Predection.module.css";
-import {CameraIcon, Icon, UploadIcon} from "../ui/Icons.jsx";
+import {CameraIcon, CameraOffIcon, Icon, UploadIcon} from "../ui/Icons.jsx";
 import ProgressBar from "../ui/ProgressBar.jsx";
 
 function Prediction({
@@ -17,6 +17,7 @@ function Prediction({
     // NEW: State to track if the webcam is actively predicting
     const [isLiveActive, setIsLiveActive] = useState(false);
     const [imageURL, setImageURL] = useState(null);
+    const [showHeatmap, setShowHeatmap] = useState(false);
 
     const hiddenFileInput = useRef(null);
     const handleCustomButtonClick = () => {
@@ -37,11 +38,11 @@ function Prediction({
 
 
     return (
-        <section>
-            <h2>Classification</h2>
+        <>
+            <h2 className={trainingStatus !== "ready" ?styles.waitReady : ""}>Classification</h2>
             {trainingStatus !== "ready"
             ?
-            <span>
+            <span className={trainingStatus !== "ready" ?styles.waitReady : ""}>
                 Train the model first to unlock classification!
             </span>
             :
@@ -64,7 +65,7 @@ function Prediction({
                                         // We pass this back up through the prop you created in Step 2!
                                 />
                             }
-                            {heatmap && isLiveActive && (
+                            {showHeatmap && heatmap && (
                                 <img
                                     src={heatmap}
                                     alt="AI Attention Heatmap"
@@ -105,30 +106,37 @@ function Prediction({
                             </span>
                             :
                             <div className={styles.uploadButton}>
-                                <Button
-                                    ariaLabel={"Upload image from device for classification"}
-                                    title={"Upload image"}
-                                    variants={["icon"]}
-                                    onClick={() => handleCustomButtonClick()}
-                                >
-                                    <Icon colors={["#ffffff"]}>
-                                        <UploadIcon />
-                                    </Icon>
-                                </Button>
-                                <Button
-                                    ariaLabel={"Toggle camera input for classification"}
-                                    title={isLiveActive ? "Close Camera" : "Open Camera"}
-                                    variants={[isLiveActive ? "danger" : "primary"]}
-                                    onClick={() => {
-                                        setImageURL(null);
-                                        setIsLiveActive(!isLiveActive)
-                                    }}
-                                >
-                                    <Icon colors={["#ffffff"]}>
-                                        <CameraIcon />
-                                    </Icon>
-                                    {isLiveActive ? "Close Camera" : "Open Camera"}
-                                </Button>
+                                <div className={styles.left}>
+                                    <Button
+                                        ariaLabel={"Upload image from device for classification"}
+                                        title={"Upload image"}
+                                        variants={["icon"]}
+                                        onClick={() => handleCustomButtonClick()}
+                                    >
+                                        <Icon colors={["#ffffff"]}><UploadIcon /></Icon>
+                                    </Button>
+                                    <Button
+                                        ariaLabel={"Toggle camera input for classification"}
+                                        title={isLiveActive ? "Close Camera" : "Open Camera"}
+                                        variants={isLiveActive ? ["icon", "alarm"] : ["icon"]}
+                                        onClick={() => {
+                                            setImageURL(null);
+                                            setIsLiveActive(!isLiveActive)
+                                        }}
+                                    >
+                                        <Icon colors={["#ffffff"]}>
+                                            {isLiveActive ? <CameraOffIcon /> : <CameraIcon />}
+                                        </Icon>
+                                    </Button>
+                                </div>
+                                <div>
+                                    <Button
+                                    ariaLabel={"Toggle Heatmap classification"}
+                                    onClick={() => setShowHeatmap(prev => !prev)}
+                                    >
+                                        {!showHeatmap ? "Show Heatmap" : "Hide Heatmap"}
+                                    </Button>
+                                </div>
                             </div>
                         }
                     </div>
@@ -161,7 +169,7 @@ function Prediction({
                 ref={hiddenFileInput}
                 style={{ display: "none" }}
             />
-        </section>
+        </>
     );
 }
 

@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import { useFeatureExtractor } from '../functions/useFeatureExtractor.js';
 import Class from "../components/Class.jsx";
 import Button from "../ui/button.jsx";
@@ -21,7 +21,31 @@ function TeachableMachine() {
     const [prediction, setPrediction] = useState(null);
     const [heatmap, setHeatmap] = useState(null);
     const [showDescription, setShowDescription] = useState(false);
+    const [activeCameraID, setActiveCameraID] = useState(null);
+    const [activeSection, setActiveSection] = useState("heroSection");
 
+    const predictionSectionRef = useRef(null);
+    const trainSectionRef = useRef(null);
+    const heroSectionRef = useRef(null);
+
+    useEffect(() => {
+        console.log(isModelLoaded ? "DA": "NE",trainingStatus)
+    }, [isModelLoaded,trainingStatus]);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    setActiveSection(entry.target.id);
+                }
+            });
+        }, { threshold: 0.5 }); // 0.5 means 50% of the section is visible
+
+        const sections = document.querySelectorAll("section");
+        sections.forEach((section) => observer.observe(section));
+
+        return () => observer.disconnect(); // Cleanup
+    }, []);
     useEffect(() => {
         return () => {
             console.log("Teachable Machine unmounted. ");
@@ -81,6 +105,14 @@ function TeachableMachine() {
         prepareAndTrain(dataset);
     };
 
+    useEffect(() => {
+        if (trainingStatus === "ready" && predictionSectionRef.current) {
+            setTimeout(() => {
+                predictionSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 500);
+        }
+    }, [trainingStatus]); // <-- This array tells React to run this effect whenever this variable changes
+
     const handleWebcamCapture = (classIndex, imageString) => {
         setDataset(prev => prev.map((cls, i) =>
             i === classIndex ? { ...cls, items: [...cls.items, imageString] } : cls
@@ -106,29 +138,40 @@ function TeachableMachine() {
 
     return (
         <>
-            <header>
-                <div className={styles.ustpLogoCon}>
-                    <img
-                        src={"/ustp-logo.png"}
-                        alt={"USTP logo"}
-                    />
-                </div>
-                <div className={styles.stepsCon}>
-                    <div>① Upload Images</div>
-                    <div>② Train Model</div>
-                    <div>③ Classify</div>
-                </div>
-                <div className={styles.eudresLogoCon}>
-                    <img
-                        src={"/eudres-logo.png"}
-                        alt={"Eudres logo"}
-                    />
-                </div>
-            </header>
+            <nav>
+                {[{text: "Upload Images", sectionId: "heroSection", sectionRef: heroSectionRef},
+                    {text: "Train Model", sectionId: "trainSection", sectionRef: trainSectionRef},
+                    {text: "Classify", sectionId: "predictionSection", sectionRef: predictionSectionRef}]
+                    .map((section, id) =>
+                    <Button
+                        key={id}
+                        variants={["transparent"]}
+                        onClick={() => section.sectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                    >
+                        <span className={activeSection === section.sectionId ? styles.activeNav : styles.passiveNav}>
+                            <b>{id}</b>{section.text}
+                        </span>
+                    </Button>
+                )}
+            </nav>
             <main>
+                <header>
+                    <div className={styles.ustpLogoCon}>
+                        <img
+                            src={"/ustp-logo.png"}
+                            alt={"USTP logo"}
+                        />
+                    </div>
+                    <div className={styles.eudresLogoCon}>
+                        <img
+                            src={"/eudres-logo.png"}
+                            alt={"Eudres logo"}
+                        />
+                    </div>
+                </header>
 
                 {/*Hero section with description*/}
-                <section className={`${styles.hero} ${showDescription ? styles.active : ""}`}>
+                <section id="heroSection" className={`${styles.hero} ${showDescription ? styles.active : ""}`}>
                     <h1>
                         Teachable Machine with TensorFlow.js
                     </h1>
@@ -151,15 +194,17 @@ function TeachableMachine() {
                 </section>
 
                 {/* Class section for defining classes and uploading pictures*/}
-                <section className={styles.classes}>
+                <section ref={heroSectionRef} className={styles.classes}>
                     <h2>Classes</h2>
                     <div className={styles.classContainer}>
-                        <div style={{width: "24px"}}></div>
+                        <div style={{width: "32px"}}></div>
                         {dataset.map((classData, i) =>
                                <Class
                                     key={i}
                                     classIndex={i}
                                     classData={classData}
+                                    activeCameraID={activeCameraID}
+                                    onUseCamera={setActiveCameraID}
                                     onUpload={handleUpload}
                                     onDelete={handleDelete}
                                     onClassDelete={handleClassDelete}
@@ -181,28 +226,8 @@ function TeachableMachine() {
                             </Button>
                         </div>
                     </div>
-                </section>
-
-                {/*Model information and start training*/}
-                <section className={styles.trainModelCon}>
-                    <h2>Train Model</h2>
-                    <span>Now that we defined our classes we can train the model on our images.</span>
-                    <Button
-                        ariaLabel={"Train Model"}
-                        variants={["hero"]}
-                        onClick={() => {handleTrain()}}
-                    >
-                        <Icon colors={["#ffffff"]}>
-                            <PlayIcon />
-                        </Icon>
-                        Train Model
-                    </Button>
                     <div className={styles.alerts}>
-                        {!isModelLoaded ? <div>Model loading...</div>
-                            : trainingStatus === "ready" ? <div>Model trained</div>
-                                : trainingStatus === "preparing" ? <div>Training Model</div>
-                                    : <div>Initialised Model</div>
-                        }
+
                         {dataset.length < 2
                             ?
                             <div className={styles.alert}>
@@ -213,7 +238,7 @@ function TeachableMachine() {
                             </div>
                             :
                             <div className={styles.alert}>
-                                <Icon colors={["mediumseagreen"]}>
+                                <Icon colors={["#15c764"]}>
                                     <CheckIcon />
                                 </Icon>
                                 <span>You have more than <b>2 classes</b></span>
@@ -237,20 +262,50 @@ function TeachableMachine() {
                                 </div>
                         )}
                     </div>
+                    <Button
+                        variants={["transparent"]}
+                        onClick={() => trainSectionRef.current ? trainSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }) : null}
+                    >
+                        Continue
+                    </Button>
+                </section>
+
+                {/*Model information and start training*/}
+                <section ref={trainSectionRef} id="trainSection" className={styles.trainModelCon}>
+                    <h2>Train Model</h2>
+                    <span>Now that we defined our classes we can train the model on our images.</span>
+                    <Button
+                        ariaLabel={"Train Model"}
+                        variants={
+                            !isModelLoaded ? ["hero", "loading"]
+                            : trainingStatus === "ready" ? ["hero", "trained"]
+                            : trainingStatus === "preparing" ? ["hero", "training"]
+                            : ["hero", "loaded"]
+                        }
+                        onClick={() => {handleTrain()}}
+                    >
+                        {isModelLoaded && trainingStatus === "idle" ? <Icon colors={["#ffffff"]}><PlayIcon /></Icon> : null}
+                        {!isModelLoaded ? "Initialising model..."
+                            : trainingStatus === "ready" ? "Model trained"
+                                : trainingStatus === "preparing" || trainingStatus === "training" ? "Training model"
+                                    : "Train model"}
+                    </Button>
                 </section>
 
                 {/*Picture Classification or live classification*/}
-                <Prediction
-                    trainingStatus={trainingStatus}
-                    prediction={prediction}
-                    heatmap={heatmap}
-                    handleTestUpload={handleTestUpload}
-                    classify={classify}
-                    setPrediction={(data) => {
-                        setPrediction(data.results);
-                        setHeatmap(data.heatmapUrl);
-                    }}
-                />
+                <section id="predictionSection" ref={predictionSectionRef}>
+                    <Prediction
+                        trainingStatus={trainingStatus}
+                        prediction={prediction}
+                        heatmap={heatmap}
+                        handleTestUpload={handleTestUpload}
+                        classify={classify}
+                        setPrediction={(data) => {
+                            setPrediction(data.results);
+                            setHeatmap(data.heatmapUrl);
+                        }}
+                    />
+                </section>
 
                 {/*Footer for contributors and tech stack*/}
                 <footer>

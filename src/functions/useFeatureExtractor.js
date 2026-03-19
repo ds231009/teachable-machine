@@ -17,6 +17,7 @@ export const useFeatureExtractor = () => {
             console.log("Downloading MobileNet v1...");
             // Load the raw MobileNet model directly from Google's servers
             const mobilenet = await tf.loadLayersModel(
+                // 'httpsaaaaaaaaa://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_1.0_224/model.json'
                 'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_1.0_224/model.json'
             );
 

@@ -5,3 +5,18 @@
     object-fit: cover;
     aspect-ratio: 1 / 1;
 }
+.webcam.alarm {
+    border: 2px crimson solid;
+}
+
+.webcamButton {
+    background-color: #fff;
+    color: crimson;
+    padding: 0 0.2rem;
+    border: 2px crimson solid;
+}
+
+.webcamButton.alarm {
+    background-color: crimson;
+    color: white;
+}

@@ -5,10 +5,13 @@ import WebcamFeed from "./WebcamFeed.jsx";
 import styles from "./Class.module.css";
 import {CameraIcon, CameraOffIcon, CheckIcon, Icon, PencilIcon, UploadIcon, XIcon} from "../ui/Icons.jsx";
 import ProgressBar from "../ui/ProgressBar.jsx";
+import WebcamButton from "./WebcamButton.jsx";
 
 function Class({
         classIndex,
         classData,
+        activeCameraID,
+        onUseCamera,
         onUpload,
         onDelete,
         onClassDelete,
@@ -18,7 +21,12 @@ function Class({
     }) {
 
     const [isEditingName, setIsEditingName] = useState(false);
-    const [isCameraActive, setIsCameraActive] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+    const isCameraActive = activeCameraID === classIndex;
+
+    const handleCapture = (imageDataUrl) => {
+        onWebcamCapture(classIndex,imageDataUrl);
+    };
 
     const hiddenFileInput = useRef(null);
 
@@ -88,61 +96,64 @@ function Class({
         </div>
         <div className={styles.classUpload}>
             {isCameraActive
-            ? <WebcamFeed
-                    isTraining={isTraining !== "idle" && isTraining !== "ready"}
-                    onCapture={(imageString) => onWebcamCapture(classIndex, imageString)}
-                />
+            ? <div>
+                    <WebcamFeed
+                        isRecording={isRecording}
+                        onCapture={handleCapture}
+                    />
+                </div>
             : null
             }
             <div className={styles.bottomRow}>
                 <div className={styles.classUploadButtons}>
-                    <Button
-                        ariaLabel={"Upload image from device for training"}
-                        title={"Upload image"}
-                        variants={["icon"]}
-                        onClick={handleCustomButtonClick}
-                        disabled={isTraining !== "idle" && isTraining !== "ready"}
-                    >
-                        <Icon colors={["#ffffff"]}><UploadIcon /></Icon>
-                    </Button>
-                    <input
-                        style={{display: "none"}}
-                        type="file"
-                        ref={hiddenFileInput}
-                        multiple
-                        accept="image/*"
-                        onChange={(e)=> onUpload(e,classIndex)}
-                        disabled={isTraining !== "idle" && isTraining !== "ready"}
+                    <div className={styles.left}>
+                        <Button
+                            ariaLabel={"Upload image from device for training"}
+                            title={"Upload image"}
+                            variants={["icon"]}
+                            onClick={handleCustomButtonClick}
+                            disabled={isTraining !== "idle" && isTraining !== "ready"}
+                        >
+                            <Icon colors={["#ffffff"]}><UploadIcon /></Icon>
+                        </Button>
+                        <input
+                            style={{display: "none"}}
+                            type="file"
+                            ref={hiddenFileInput}
+                            multiple
+                            accept="image/*"
+                            onChange={(e) => {
+                                onUpload(e, classIndex);
+                                e.target.value = null; // <-- Resets the input so you can upload the same file again!
+                            }}
+                            disabled={isTraining !== "idle" && isTraining !== "ready"}
 
-                    />
-                    {isCameraActive
-                        ?
+                        />
                         <Button
-                            ariaLabel="Close Camera Input"
-                            title={"Close Camera"}
-                            variants={["transparent","alarm"]}
-                            onClick={()=> setIsCameraActive(false)}
+                            ariaLabel={isCameraActive ? "Close Camera Input" : "Open camera input"}
+                            title={isCameraActive ? "Close Camera" : "Open Camera"}
+                            variants={isCameraActive ? ["icon", "alarm"] : ["icon"]}
+                            onClick={() => {
+                                // If it's open, send null to close it. Otherwise, send this class's ID to open it!
+                                onUseCamera(isCameraActive ? null : classIndex);
+                            }}
                         >
-                            <Icon colors={["crimson"]}>
-                                <CameraOffIcon />
+                            <Icon colors={["#FFFFFF"]}>
+                                {isCameraActive ? <CameraOffIcon /> : <CameraIcon />}
                             </Icon>
-                            Close Camera
                         </Button>
-                        :
-                        <Button
-                            ariaLabel={"Open camera input"}
-                            title={"Open Camera"}
-                            variants={["transparent"]}
-                            onClick={()=> setIsCameraActive(true)}
-                        >
-                            <Icon>
-                                <CameraIcon />
-                            </Icon>
-                            Open Camera
-                        </Button>
+                        <span>{classData.items.length} image{classData.items.length === 1 ? "" : "s"}</span>
+                    </div>
+                    {isCameraActive &&
+                        <WebcamButton
+                            isTraining={isTraining}
+                            isRecording={isRecording}
+                            onStart={() => setIsRecording(true)}
+                            onStop={() => setIsRecording(false)}
+                        />
                     }
                 </div>
-                <ProgressBar progress={classData.items.length / 15} color={"#0074CC"} variant={"a"} />
+                <ProgressBar progress={classData.items.length / 15} color={"#007400"} variant={"a"} />
             </div>
         </div>
     </div>

@@ -32,10 +32,22 @@ button.small {
     height: 1rem;
 }
 
+
 button.hero {
-    width: auto;
+    min-width: 164px;
     height: 3rem;
-    padding: 0 2rem;
     font-size: 1.25rem;
     font-weight: 600;
 }
+
+button.hero {
+    min-width: 164px;
+    height: 3rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    border-radius: 8px;
+}
+
+/*button.trained {*/
+/*    background-image: linear-gradient(-45deg,var(--color-blue-500), var(--color-blue-400));*/
+/*}*/
