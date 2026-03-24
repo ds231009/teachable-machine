@@ -6,9 +6,8 @@
 }
 body {
   margin: 0;
-  background-color: #eee;
+  background-image: linear-gradient(#fff, #ddd);
 }
-
 
 #root {
   margin: 0;
@@ -54,11 +53,9 @@ button:active {
 header {
   width: 100%;
   padding: 1rem 2rem;
-  /*display: flex;*/
-  /*align-items: center;*/
-  /*justify-content: space-between;*/
   display: grid;
   grid-template-columns: 1fr 1fr;
+  user-select: none;
 }
 
 footer {
@@ -132,6 +129,8 @@ main {
 
 
 nav {
+  user-select: none;
+  z-index: 10;
   display: flex;
   padding: 0.5rem;
   padding-top: 2rem;
@@ -139,6 +138,7 @@ nav {
   gap: 0.5rem;
   align-items: start;
   justify-content: center;
-  height: 100vh;
+  /*height: 100vh;*/
+  top: 50%;
   position: fixed;
 }

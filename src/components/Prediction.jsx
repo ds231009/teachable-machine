@@ -39,12 +39,17 @@ function Prediction({
 
     return (
         <>
-            <h2 className={trainingStatus !== "ready" ?styles.waitReady : ""}>Classification</h2>
+            <h2>Classification</h2>
             {trainingStatus !== "ready"
             ?
-            <span className={trainingStatus !== "ready" ?styles.waitReady : ""}>
-                Train the model first to unlock classification!
-            </span>
+            <>
+                <span className={trainingStatus !== "ready" ?styles.waitReady : ""}>
+                    With a fully trained model, you can now put it to the real-world test. By showing the model completely new, unseen images, it will calculate a real-time prediction of which class the image belongs to, complete with a confidence score.
+                </span>
+                <span style={{fontWeight: "bold"}}>
+                    Train the model first to unlock classification!
+                </span>
+            </>
             :
             (
                 <div className={styles.predictionCon}>

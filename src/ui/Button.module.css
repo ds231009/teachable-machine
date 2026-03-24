@@ -52,12 +52,18 @@ button.hero {
     transition: all 0.2s ease-in-out;
     overflow: hidden;
 }
-button.hero:hover {
+button.hero.preparing, button.hero.training, button.hero:hover {
     background-color: transparent;
     box-shadow: 2px 2px 16px rgba(1, 13, 19, 0.25) inset, 2px 2px 8px rgba(255, 255, 255, 1);
 }
+button.loaded {
+}
 
-button.hero::after {
+button.changedAfterTrained {
+
+}
+
+button.hero.preparing::after, button.hero.training::after, button.hero:hover::after {
     position: absolute;
     content: "";
     width: 200px;
