@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from "react";
 import { useFeatureExtractor } from '../functions/useFeatureExtractor.js';
-import Button from "../ui/button.jsx";
+import Button from "../ui/Button.jsx";
 
 import Class from "../components/Class.jsx";
 import Prediction from "../components/Prediction.jsx";
