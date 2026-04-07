@@ -72,7 +72,6 @@ function Train({
                 {/* Dynamically render the text */}
                 {btnConfig.text}
             </Button>
-            {btnConfig.variants}
         </>
     );
 }

@@ -25,7 +25,7 @@ function TeachableMachine() {
     const [showDescription, setShowDescription] = useState(false);
     const [activeCameraID, setActiveCameraID] = useState(null);
     const [activeSection, setActiveSection] = useState("classSection");
-    const [changedAfterTrained, setChangedAfterTrained] = useState(true);
+    const [changedAfterTrained, setChangedAfterTrained] = useState(false);
 
     const predictionSectionRef = useRef(null);
     const trainSectionRef = useRef(null);
@@ -173,30 +173,26 @@ function TeachableMachine() {
                 )}
             </nav>
             <main>
-                <header>
-                    <div className={styles.ustpLogoCon}>
-                        <img
-                            src={"/ustp-logo.png"}
-                            alt={"USTP logo"}
-                        />
-                    </div>
-                    <div className={styles.eudresLogoCon}>
-                        <img
-                            src={"/eudres-logo.png"}
-                            alt={"Eudres logo"}
-                        />
-                    </div>
+                <header class="navbar">
+                        <a class="navbar-brand" href="/">
+                            <svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M75.3971 91.83C70.8497 91.4523 66.6499 90.3119 62.7375 88.3924C56.3842 85.2755 51.1013 80.2413 47.7385 74.0996L47.2084 73.1315L48.802 72.817C58.5582 70.8921 66.6241 63.6366 69.5781 54.1282C70.6148 50.7912 70.6507 50.4398 70.719 42.9403L70.781 36.1321H91.3905H112L111.935 48.1661C111.891 56.3149 111.814 60.5803 111.697 61.3777C111.067 65.6535 110.045 69.0225 108.303 72.5652C106.408 76.4185 104.413 79.161 101.283 82.2164C96.0573 87.3163 89.4955 90.5555 82.3736 91.5509C80.6859 91.7868 76.7649 91.9437 75.3971 91.83ZM39.7736 73.06C38.2153 72.8628 35.3113 72.1217 33.7792 71.5304C23.8189 67.6863 17.1541 58.8935 16.1529 48.2765C16.069 47.3859 16.0002 44.2891 16.0001 41.3947L16 36.1321H29.679H43.358L43.4202 48.4605C43.4865 61.6223 43.4837 61.5661 44.2694 65.205C44.6766 67.0905 45.5209 69.6573 46.3578 71.5538L47.0158 73.0447L46.2652 73.1349C45.1976 73.2632 40.9957 73.2147 39.7736 73.06Z" fill="#0074CC"/>
+                            </svg>
+                            Teachable Machine
+                        </a>
                 </header>
 
                 {/*Hero section with description*/}
                 <section id="heroSection" className={`${styles.hero} ${showDescription ? styles.active : ""}`}>
                     <h1>
-                        Teachable Machine with TensorFlow.js
+                        Live Image Classification
                     </h1>
                     <p>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel sapien eget nunc efficitur varius. Sed at felis a enim efficitur commodo. In hac habitasse platea dictumst. Nulla facilisi. Donec ac odio a nisl convallis tincidunt. Suspendisse potenti.
+                        Ever wonder how artificial intelligence recognizes faces, reads handwriting, or drives cars?
+                        It all starts with data. This tool lets you build a real, working machine learning model right in your browser.
+                        You don't need to know how to code you just need your webcam and a few objects to get started.
                     </p>
-                    <div className={`${styles.description} ${showDescription ? styles.active : ""}`}>
+                    {/* <div className={`${styles.description} ${showDescription ? styles.active : ""}`}>
                         <span style={{minHeight: 0}}>Extra blabla</span>
                     </div>
                     <Button
@@ -208,7 +204,7 @@ function TeachableMachine() {
                             <ChevronIcon />
                         </Icon>
                         {!showDescription ? "Learn more" : ""}
-                    </Button>
+                    </Button> */}
                 </section>
 
                 {/* Class section for defining classes and uploading pictures*/}
@@ -317,12 +313,11 @@ function TeachableMachine() {
                 </section>
 
                 {/*Footer for contributors and tech stack*/}
-                <footer>
+                <footer class="footer">
+                    <span>Teachable Machine © 2026 | University of Applied Sciences St. Pölten</span>
                     <div>
-                        <li>Julian Pecho</li>
-                        <li>Sebastian Eresheim</li>
-                        <li>Lukas Metzler</li>
-                        <li>Fabian Fuchs</li>
+                        <img width="125px" src="public\ustp-logo.png" />
+                        <img width="115px" src="public\eudres-logo.png" />
                     </div>
                 </footer>
             </main>

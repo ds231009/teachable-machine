@@ -51,26 +51,51 @@ button:active {
 }
 
 header {
-  width: 100%;
-  padding: 1rem 2rem;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  user-select: none;
+    background-color: #102860;
+    width: 100%;
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-light);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    gap: 0.5rem;
+}
+
+.navbar-brand svg {
+    width: 32px;
+    height: 32px;
 }
 
 footer {
-  width: 100%;
-  padding: 1rem 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  list-style-type: none;
+    text-align: center;
+    width: 100%;
+    min-height: 6rem;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    list-style-type: none;
 }
+
+footer span {
+    text-align: start;
+}
+
 footer div {
-  display: flex;
-  flex-direction: column;
-  justify-items: start;
-  align-items: start;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem
 }
 
 section {
@@ -112,6 +137,7 @@ p {
 
 span {
   color: #636363;
+  max-width: 720px  ;
 }
 
 b {
@@ -139,6 +165,6 @@ nav {
   align-items: start;
   justify-content: center;
   /*height: 100vh;*/
-  top: 50%;
+  top: 45%;
   position: fixed;
 }
