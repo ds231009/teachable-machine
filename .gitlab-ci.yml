@@ -1,0 +1,25 @@
+# Use a standard Node.js image to build the app
+image: node:20
+
+pages:
+  stage: deploy
+  script:
+    # 1. Install your dependencies
+    - npm ci
+
+    # 2. Build the Vite project (outputs to the /dist folder)
+    - npm run build
+
+    # 3. GitLab Pages REQUIRES the folder to be named 'public'.
+    # So we delete any existing public folder, and copy our 'dist' contents into a new 'public' folder.
+    - rm -rf public
+    - cp -a dist/. public/
+
+  artifacts:
+    paths:
+      # Tell GitLab to take this public folder and host it
+      - public
+
+  rules:
+    # Only run this deployment pipeline when you push to the main/master branch
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
