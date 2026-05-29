@@ -126,6 +126,7 @@ function Prediction({
                                         variants={isLiveActive ? ["icon", "alarm"] : ["icon"]}
                                         onClick={() => {
                                             setImageURL(null);
+                                            setShowHeatmap(false);
                                             setIsLiveActive(!isLiveActive)
                                         }}
                                     >

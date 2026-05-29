@@ -316,8 +316,8 @@ function TeachableMachine() {
                 <footer class="footer">
                     <span>Teachable Machine © 2026 | University of Applied Sciences St. Pölten</span>
                     <div>
-                        <img width="125px" src="public\ustp-logo.png" />
-                        <img width="115px" src="public\eudres-logo.png" />
+                        <img width="125px" src="ustp-logo.png" />
+                        <img width="115px" src="eudres-logo.png" />
                     </div>
                 </footer>
             </main>

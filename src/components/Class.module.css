@@ -1,5 +1,6 @@
 .class {
     min-width: 336px;
+    max-width: 336px;
     min-height: 0;
     max-height: 384px;
     background-color: #fff;
